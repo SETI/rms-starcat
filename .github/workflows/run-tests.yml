@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    name: Test julian
+    name: Test starcat
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
