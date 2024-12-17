@@ -9,7 +9,7 @@ from starcat import UCAC4StarCatalog
 class Test_UCAC4StarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
-        cat = UCAC4StarCatalog(FCPath('gs://rms-nav-star-catalogs/UCAC4',
+        cat = UCAC4StarCatalog(FCPath('gs://rms-node-star-catalogs/UCAC4',
                                       anonymous=True))
 
         # Zone 1

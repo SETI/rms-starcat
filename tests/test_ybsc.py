@@ -9,7 +9,7 @@ from starcat import YBSCStarCatalog
 class Test_YBSCStarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
-        cat = YBSCStarCatalog(FCPath('gs://rms-nav-star-catalogs/YBSC',
+        cat = YBSCStarCatalog(FCPath('gs://rms-node-star-catalogs/YBSC',
                                      anonymous=True))
 
         self.assertEqual(len(cat._stars), 9096)
