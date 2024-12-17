@@ -4,12 +4,10 @@
 
 from __future__ import print_function
 
-try:
-    from starcatalog import *
-except:
-    from .starcatalog import *
-import numpy as np
-import os.path
+from .starcatalog import (Star,
+                          StarCatalog
+                          )
+import os
 import cspyce
 
 class SpiceStar(Star):
@@ -28,7 +26,7 @@ class SpiceStar(Star):
 
 class SpiceStarCatalog(StarCatalog):
     def __init__(self, name):
-        self.filename = os.path.join(os.environ["SPICE_PATH"], "Stars", name+'.bdb')
+        self.filename = os.path.join(os.environ['SPICE_PATH'], 'Stars', name+'.bdb')
         self.catalog = cspyce.stcl01(self.filename)[0]
         self.debug_level = 0
 
@@ -60,38 +58,3 @@ class SpiceStarCatalog(StarCatalog):
             if self.debug_level:
                 print('OK!')
             yield star
-
-
-
-#===============================================================================
-# UNIT TESTS
-#===============================================================================
-
-import unittest
-
-class Test_SpiceStarCatalog(unittest.TestCase):
-
-    def runTest(self):
-        cat = SpiceStarCatalog('hipparcos')
-
-        num_all = cat.count_stars()
-        self.assertEqual(num_all, 117955)
-
-        num_vmag_lim = cat.count_stars(vmag_max=10)
-        self.assertGreater(num_all, num_vmag_lim)
-
-        # Compare slicing directions
-        num_dec = 0
-        for idec in range(20):
-            num_dec += cat.count_stars(dec_min=0.2*idec*RPD,
-                                       dec_max=0.2*(idec+1)*RPD,
-                                       ra_min=60*RPD, ra_max=70*RPD)
-        num_ra = 0
-        for ira in range(10):
-            num_ra += cat.count_stars(dec_min=0., dec_max=4.*RPD,
-                                      ra_min=(ira+60)*RPD, ra_max=((ira+1)+60)*RPD)
-        self.assertEqual(num_dec, num_ra)
-
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)

@@ -1,2 +1,6 @@
 coverage
+cspyce
+flake8
+numpy
 pytest
+rms-filecache

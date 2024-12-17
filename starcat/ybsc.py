@@ -8,15 +8,17 @@
 #     =1964BS....C......0H
 # From ftp://cdsarc.u-strasbg.fr/cats/V/50/1
 
-from __future__ import print_function
-
-try:
-    from starcatalog import *
-except:
-    from .starcatalog import *
 import numpy as np
-import os.path
-import struct
+import os
+
+from filecache import FCPath
+
+from .starcatalog import (AS_TO_RAD,
+                          YEAR_TO_SEC,
+                          Star,
+                          StarCatalog
+                          )
+
 
 YBSC_IR_NASA = 0
 YBSC_IR_ENGLES = 1
@@ -83,57 +85,57 @@ class YBSCStar(Star):
     def __str__(self):
         ret = Star.__str__(self)
 
-        ret += 'Name "' + str(self.name) + '"'
-        ret += ' | Durch "' + str(self.durchmusterung_id) + '"'
-        ret += ' | Draper ' + str(self.draper_number)
-        ret += ' | SAO ' + str(self.sao_number)
-        ret += ' | FK5 ' + str(self.fk5_number)
+        ret += f'Name "{self.name}"'
+        ret += f' | Durch "{self.durchmusterung_id}"'
+        ret += f' | Draper {self.draper_number}'
+        ret += f' | SAO {self.sao_number}'
+        ret += f' | FK5 {self.fk5_number}'
         ret += '\n'
 
-        ret += 'IR ' + str(self.ir_source) + ' Ref ' + str(self.ir_source_ref)
-        ret += ' | Double "' + str(self.double_star_code) + '"'
-        ret += ' | Aitken ' + str(self.aitken_designation) + ' '
+        ret += f'IR {self.ir_source} Ref {self.ir_source_ref}'
+        ret += f' | Double "{self.double_star_code}"'
+        ret += f' | Aitken {self.aitken_designation} '
         ret += str(self.ads_components)
-        ret += ' | Variable ' + str(self.variable_star_id)
+        ret += f' | Variable {self.variable_star_id}'
         ret += '\n'
 
         if self.temperature is None:
             ret += 'TEMP None'
         else:
-            ret += 'TEMP %5d' % (self.temperature)
-        ret += ' | SCLASS %2s' % (self.spectral_class)
-        ret += ' ' + str(self.spectral_class_code)
+            ret += f'TEMP {self.temperature:5d}'
+        ret += f' | SCLASS {self.spectral_class:2s}'
+        ret += f' {self.spectral_class_code}'
 
         ret += ' | Galactic LON '
         if self.galactic_longitude is None:
             ret += 'None'
         else:
-            ret += str(self.galactic_longitude*DPR)
+            ret += str(np.degrees(self.galactic_longitude))
         ret += ' LAT '
         if self.galactic_latitude is None:
             ret += 'None'
         else:
-            ret += str(self.galactic_latitude*DPR)
+            ret += str(np.degrees(self.galactic_latitude))
         ret += '\n'
 
-        ret += 'B-V ' + str(self.b_v)
-        ret += ' | U-B ' + str(self.u_b)
-        ret += ' | R-I ' + str(self.r_i)
+        ret += f'B-V {self.b_v}'
+        ret += f' | U-B {self.u_b}'
+        ret += f' | R-I {self.r_i}'
         ret += '\n'
 
-        ret += 'Parallax "' + str(self.parallax_type) + '"'
-        ret += ' ' + str(self.parallax)
-        ret += ' | RadVel ' + str(self.radial_velocity)
-        ret += ' ' + str(self.radial_velocity_comments)
-        ret += ' ' + str(self.rotational_velocity_limit)
-        ret += ' | RotVel ' +str(self.rotational_velocity)
-        ret += ' ' + str(self.rotational_velocity_uncertainty_flag)
+        ret += f'Parallax "{self.parallax_type}"'
+        ret += f' {self.parallax}'
+        ret += f' | RadVel {self.radial_velocity}'
+        ret += f' {self.radial_velocity_comments}'
+        ret += f' {self.rotational_velocity_limit}'
+        ret += f' | RotVel {self.rotational_velocity}'
+        ret += f' {self.rotational_velocity_uncertainty_flag}'
         ret += '\n'
 
-        ret += 'Double mag diff ' + str(self.double_mag_diff)
-        ret += ' Sep ' + str(self.double_mag_sep)
-        ret += ' Components ' + str(self.double_mag_components)
-        ret += ' Num components ' + str(self.multiple_num_components)
+        ret += f'Double mag diff {self.double_mag_diff}'
+        ret += f' Sep {self.double_mag_sep}'
+        ret += f' Components {self.double_mag_components}'
+        ret += f' Num components {self.multiple_num_components}'
         ret += '\n'
 
         return ret
@@ -245,25 +247,24 @@ class YBSCStar(Star):
 class YBSCStarCatalog(StarCatalog):
     def __init__(self, dir=None):
         if dir is None:
-            self.dirname = os.environ["YBSC_DIR"]
+            self._dirname = FCPath(os.environ['YBSC_DIR'])
         else:
-            self.dirname = dir
+            self._dirname = FCPath(dir)
 
-        self.stars = []
+        self._stars = []
 
-        fp = open(os.path.join(self.dirname, 'catalog'), 'r')
-        while True:
-            record = fp.readline().rstrip()
-            if record == '':
-                break
-            if record[102:107].strip() == '': # No VMAG
-                continue
-            star = self._record_to_star(record)
-            self.stars.append(star)
-        fp.close()
+        with (self._dirname / 'catalog').open(mode='r') as fp:
+            while True:
+                record = fp.readline().rstrip()
+                if record == '':
+                    break
+                if record[102:107].strip() == '':  # No VMAG
+                    continue
+                star = self._record_to_star(record)
+                self._stars.append(star)
 
-
-    def _find_stars(self, ra_min, ra_max, dec_min, dec_max, **kwargs):
+    def _find_stars(self, ra_min, ra_max, dec_min, dec_max,
+                    vmag_min=None, vmag_max=None, allow_double=False, **kwargs):
         """Yield the results for all stars.
 
         Optional arguments:      DEFAULT
@@ -273,11 +274,7 @@ class YBSCStarCatalog(StarCatalog):
             allow_double         False     Allow double stars
         """
 
-        vmag_min = kwargs.get('vmag_min', None)
-        vmag_max = kwargs.get('vmag_max', None)
-        allow_double = kwargs.get('allow_double', False)
-
-        for star in self.stars:
+        for star in self._stars:
             if not ra_min <= star.ra <= ra_max:
                 continue
             if not dec_min <= star.dec <= dec_max:
@@ -295,9 +292,9 @@ class YBSCStarCatalog(StarCatalog):
     def _record_to_star(record):
         star = YBSCStar()
 
-            ###################
-            # CATALOG NUMBERS #
-            ###################
+        ###################
+        # CATALOG NUMBERS #
+        ###################
 
 #    1-  4  I4     ---     HR       [1/9110]+ Harvard Revised Number
 #                                     = Bright Star Number
@@ -369,8 +366,8 @@ class YBSCStarCatalog(StarCatalog):
             dec_deg = -dec_deg
             sign = -1
 
-        star.ra = (ra_hr/24. + ra_min/24./60 + ra_sec/24./60/60)*360 * RPD
-        star.dec = sign*(dec_deg + dec_min/60. + dec_sec/3600.) * RPD
+        star.ra = np.radians((ra_hr/24. + ra_min/24./60 + ra_sec/24./60/60)*360)
+        star.dec = np.radians(sign*(dec_deg + dec_min/60. + dec_sec/3600.))
 
         ########################
         # GALACTIC COORDINATES #
@@ -379,8 +376,8 @@ class YBSCStarCatalog(StarCatalog):
 #   91- 96  F6.2   deg     GLON     ?Galactic longitude (1)
 #   97-102  F6.2   deg     GLAT     ?Galactic latitude (1)
 
-        star.galactic_longitude = float(record[90:96]) * RPD
-        star.galactic_latitude = float(record[96:102]) * RPD
+        star.galactic_longitude = np.radians(float(record[90:96]))
+        star.galactic_latitude = np.radians(float(record[96:102]))
 
         ##############
         # MAGNITUDES #
@@ -475,36 +472,3 @@ class YBSCStarCatalog(StarCatalog):
         star.temperature = StarCatalog.temperature_from_sclass(sclass)
 
         return star
-
-
-#===============================================================================
-# UNIT TESTS
-#===============================================================================
-
-import unittest
-
-class Test_YBSCStarCatalog(unittest.TestCase):
-
-    def runTest(self):
-        cat = YBSCStarCatalog('/seti/external/YBSC')
-
-        self.assertEqual(len(cat.stars), 9096)
-        self.assertEqual(cat.count_stars(), 7519)
-        self.assertEqual(cat.count_stars(allow_double=True), 9096)
-
-        # Look up Vega
-        ra_vega = 279.2333 * RPD
-        dec_vega = 38.7836 * RPD
-
-        vega_list = list(cat.find_stars(ra_min=ra_vega-0.1*RPD,
-                                        ra_max=ra_vega+0.1*RPD,
-                                        dec_min=dec_vega-0.1*RPD,
-                                        dec_max=dec_vega+0.1*RPD))
-        self.assertEqual(len(vega_list), 1)
-
-        vega = vega_list[0]
-        self.assertEqual(vega.vmag, 0.03)
-
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)

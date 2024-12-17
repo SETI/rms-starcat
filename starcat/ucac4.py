@@ -4,15 +4,18 @@
 
 #    Zacharias, N. et al. 2013, The Astronomical Journal, 145, 44
 
-from __future__ import print_function
-
-try:
-    from starcatalog import *
-except ImportError:
-    from .starcatalog import *
-import numpy as np
 import os.path
 import struct
+
+from filecache import FCPath
+import numpy as np
+
+from .starcatalog import (HALFPI,
+                          MAS_TO_RAD,
+                          YEAR_TO_SEC,
+                          Star,
+                          StarCatalog
+                          )
 
 UCAC4_OBJ_TYPE_CLEAN = 0
 UCAC4_OBJ_TYPE_NEAR_OVEREXPOSED = 1
@@ -113,14 +116,14 @@ class UCAC4Star(Star):
         if self.vmag_model is None:
             ret += 'APER VMAG None'
         else:
-            ret += 'APER VMAG %6.3f' % self.vmag_model
+            ret += f'APER VMAG {self.vmag_model:6.3f}'
         ret += ' | '
 
         if self.temperature is None:
             ret += 'TEMP None'
         else:
-            ret += 'TEMP %5d' % (self.temperature)
-        ret += ' | SCLASS %2s' % (str(self.spectral_class))
+            ret += f'TEMP {self.temperature:5d}'
+        ret += f' | SCLASS {self.spectral_class:2s}'
         ret += '\n'
 
         ret += 'DBL STAR FLAG='
@@ -156,35 +159,34 @@ class UCAC4Star(Star):
         if self.apass_mag_b is None:
             ret += 'B None '
         else:
-            ret += 'B %6.3f +/- %6.3f ' % (self.apass_mag_b,
-                                           self.apass_mag_b_sigma)
+            ret += f'B {self.apass_mag_b:6.3f} +/- {self.apass_mag_b_sigma:6.3f} '
+
         if self.apass_mag_v is None:
             ret += 'V None '
         else:
-            ret += 'V %6.3f +/- %6.3f ' % (self.apass_mag_v,
-                                           self.apass_mag_v_sigma)
+            ret += f'V {self.apass_mag_v:6.3f} +/- {self.apass_mag_v_sigma:6.3f} '
+
         if self.apass_mag_g is None:
             ret += 'G None '
         else:
-            ret += 'G %6.3f +/- %6.3f ' % (self.apass_mag_g,
-                                           self.apass_mag_g_sigma)
+            ret += f'G {self.apass_mag_g:6.3f} +/- {self.apass_mag_g_sigma:6.3f} '
+
         if self.apass_mag_r is None:
             ret += 'R None '
         else:
-            ret += 'R %6.3f +/- %6.3f ' % (self.apass_mag_r,
-                                           self.apass_mag_r_sigma)
+            ret += f'R {self.apass_mag_r:6.3f} +/- {self.apass_mag_r_sigma:6.3f} '
+
         if self.apass_mag_i is None:
             ret += 'I None'
         else:
-            ret += 'I %6.3f +/- %6.3f' % (self.apass_mag_i,
-                                           self.apass_mag_i_sigma)
+            ret += f'I {self.apass_mag_i:6.3f} +/- {self.apass_mag_i_sigma:6.3f}'
+
         ret += '\n'
 
         if self.johnson_mag_b is None or self.johnson_mag_v is None:
             ret += 'JOHNSON B None V None'
         else:
-            ret += 'JOHNSON B %6.3f V %6.3f' % (self.johnson_mag_b,
-                                                self.johnson_mag_v)
+            ret += f'JOHNSON B {self.johnson_mag_b:6.3f} V {self.johnson_mag_v:6.3f}'
         ret += '\n'
 
         return ret
@@ -273,9 +275,9 @@ assert struct.calcsize(UCAC4_FMT_RA) == UCAC4_RECORD_SIZE_RA
 class UCAC4StarCatalog(StarCatalog):
     def __init__(self, dir=None):
         if dir is None:
-            self.dirname = os.environ["UCAC4_DIR"]
+            self._dirname = FCPath(os.environ["UCAC4_DIR"])
         else:
-            self.dirname = dir
+            self._dirname = FCPath(dir)
         self.debug_level = 0
 
     def _find_stars(self, ra_min, ra_max, dec_min, dec_max, **kwargs):
@@ -302,12 +304,12 @@ class UCAC4StarCatalog(StarCatalog):
                                            starting RA
         """
 
-        start_znum = int(max(np.floor((dec_min*DPR+90)*5)+1, 1))
-        end_znum = int(min(np.floor((dec_max*DPR+90-1e-15)*5)+1, 900))
+        start_znum = int(max(np.floor((np.degrees(dec_min)+90)*5)+1, 1))
+        end_znum = int(min(np.floor((np.degrees(dec_max)+90-1e-15)*5)+1, 900))
 
         for znum in range(start_znum, end_znum+1):
             fn = self._zone_filename(znum)
-            with open(fn, 'rb') as fp:
+            with fn.open(mode='rb') as fp:
                 for star in self._find_stars_one_file(znum, fp,
                                                       ra_min, ra_max,
                                                       dec_min, dec_max,
@@ -315,17 +317,12 @@ class UCAC4StarCatalog(StarCatalog):
                     yield star
 
     def _find_stars_one_file(self, znum, fp, ra_min, ra_max, dec_min, dec_max,
+                             full_result=True, vmag_min=None, vmag_max=None,
+                             require_clean=True, allow_double=False,
+                             allow_galaxy=False, require_pm=True,
+                             return_everything=False, optimize_ra=True,
                              **kwargs):
         """Yield the results for a single zone."""
-        full_result = kwargs.get('full_result', True)
-        vmag_min = kwargs.get('vmag_min', None)
-        vmag_max = kwargs.get('vmag_max', None)
-        require_clean = kwargs.get('require_clean', True)
-        allow_double = kwargs.get('allow_double', False)
-        allow_galaxy = kwargs.get('allow_galaxy', False)
-        require_pm = kwargs.get('require_pm', True)
-        return_everything = kwargs.get('return_everything', False)
-        optimize_ra = kwargs.get('optimize_ra', True)
 
         if return_everything:
             require_clean = False
@@ -334,7 +331,7 @@ class UCAC4StarCatalog(StarCatalog):
             require_pm = False
 
         if optimize_ra:
-            rec_num = self._find_starting_ra(fp, ra_min) # 0-based
+            rec_num = self._find_starting_ra(fp, ra_min)  # 0-based
         else:
             rec_num = 0
 
@@ -342,7 +339,7 @@ class UCAC4StarCatalog(StarCatalog):
             record = fp.read(UCAC4_RECORD_SIZE)
             if len(record) != UCAC4_RECORD_SIZE:
                 break
-            rec_num += 1 # This makes rec_num 1-based
+            rec_num += 1  # This makes rec_num 1-based
             parsed = struct.unpack(UCAC4_FMT, record)
             star = UCAC4Star()
 
@@ -366,8 +363,7 @@ class UCAC4StarCatalog(StarCatalog):
             if star.ra >= ra_max:
                 # RA is in ascending order in the file
                 if self.debug_level > 1:
-                    print('ID', parsed[42], 'SKIPPED RA AND REST OF FILE', end=' ')
-                    print(star.ra)
+                    print('ID', parsed[42], 'SKIPPED RA AND REST OF FILE', star.ra)
                 break
             if (star.ra < ra_min or
                 star.dec < dec_min or star.dec >= dec_max):
@@ -412,14 +408,12 @@ class UCAC4StarCatalog(StarCatalog):
             if vmag_min is not None:
                 if star.vmag is None or star.vmag < vmag_min:
                     if self.debug_level > 1:
-                        print('ID', parsed[42], 'SKIPPED MODEL MAG', end=' ')
-                        print(star.vmag_model)
+                        print('ID', parsed[42], 'SKIPPED MODEL MAG', star.vmag_model)
                     continue
             if vmag_max is not None:
                 if star.vmag is None or star.vmag > vmag_max:
                     if self.debug_level > 1:
-                        print('ID', parsed[42], 'SKIPPED MODEL MAG', end=' ')
-                        print(star.vmag_model)
+                        print('ID', parsed[42], 'SKIPPED MODEL MAG', star.vmag_model)
                     continue
 
             ###############
@@ -519,8 +513,8 @@ class UCAC4StarCatalog(StarCatalog):
             star.extended_source = parsed[41] # XXX What units is this in?
             if not allow_galaxy and (star.galaxy_match or star.extended_source):
                 if self.debug_level:
-                    print('ID', parsed[42], 'SKIPPED GALAXY/EXTENDED', end=' ')
-                    print(star.galaxy_match, star.extended_source)
+                    print('ID', parsed[42], 'SKIPPED GALAXY/EXTENDED',
+                          star.galaxy_match, star.extended_source)
                 continue
             if star.galaxy_match:
                 star.galaxy_match = 10.**star.galaxy_match / 10. / 60. # Degrees
@@ -634,7 +628,7 @@ class UCAC4StarCatalog(StarCatalog):
 #    catalog like Hipparcos, Tycho or high proper motion data, a mean
 #    error in position and proper motion depending on the catalog and
 #    magnitude of the star was adopted.
-            star.rac_sigma = (parsed[7]+128.) * MAS_TO_RAD # RA * COS(DEC)
+            star.rac_sigma = (parsed[7]+128.) * MAS_TO_RAD  # RA * COS(DEC)
             star.ra_sigma = star.rac_sigma / np.cos(star.dec)
             star.dec_sigma = (parsed[8]+128.) * MAS_TO_RAD
 
@@ -935,14 +929,13 @@ class UCAC4StarCatalog(StarCatalog):
             if parsed[43] == 0:
                 star.id_str_ucac2 = None
             else:
-                star.id_str_ucac2 = 'UCAC2-%03d-%06d' % (parsed[43],
-                                                         parsed[44])
+                star.id_str_ucac2 = f'UCAC2-{parsed[43]:03d}-{parsed[44]:06d}'
 
             ###############################
             # UCAC4 IDENTIFICATION NUMBER #
             ###############################
 
-            star.id_str = 'UCAC4-%03d-%06d' % (znum, rec_num)
+            star.id_str = f'UCAC4-{znum:03d}-{rec_num:06d}'
 
             ##################################################
             # COMPUTE SPECTRAL CLASS AND SURFACE TEMPERATURE #
@@ -966,11 +959,12 @@ class UCAC4StarCatalog(StarCatalog):
 
     def _zone_filename(self, znum):
         """Convert a UCAC4 zone number to an absolute pathspec."""
-        fn = os.path.join(self.dirname, 'u4b', 'z%03d'%znum)
-        return fn
+
+        return self._dirname / 'u4b' / f'z{znum:03d}'
 
     def _find_starting_ra(self, fp, ra_min):
         """Efficiently find the first record >= RA_MIN."""
+
         if ra_min <= 0.:
             # No point in searching!
             return 0
@@ -1000,76 +994,3 @@ class UCAC4StarCatalog(StarCatalog):
         # At this point lo is the best we can do
         fp.seek(lo*UCAC4_RECORD_SIZE, os.SEEK_SET)
         return lo // UCAC4_RECORD_SIZE
-
-
-#===============================================================================
-# UNIT TESTS
-#===============================================================================
-
-import unittest
-
-class Test_UCAC4StarCatalog(unittest.TestCase):
-
-    def runTest(self):
-        cat = UCAC4StarCatalog('t:/external/ucac4')
-
-        # Zone 1
-        num_pm = cat.count_stars(require_clean=False, allow_double=True,
-                                 allow_galaxy=True, require_pm=True,
-                                 dec_min=-90*RPD, dec_max=-89.8*RPD)
-        num_all = cat.count_stars(require_clean=False, allow_double=True,
-                                  allow_galaxy=True, require_pm=False,
-                                  dec_min=-90*RPD, dec_max=-89.8*RPD)
-        self.assertEqual(num_all, 206)
-        self.assertEqual(num_all-num_pm, 5)
-
-        # Zone 451
-        num_pm = cat.count_stars(require_clean=False, allow_double=True,
-                                 allow_galaxy=True, require_pm=True,
-                                 dec_min=0., dec_max=0.2*RPD)
-        num_all = cat.count_stars(require_clean=False, allow_double=True,
-                                  allow_galaxy=True, require_pm=False,
-                                  dec_min=0., dec_max=0.2*RPD)
-        self.assertEqual(num_all, 133410)
-        self.assertEqual(num_all-num_pm, 6509) # zone_stats says 6394??
-
-        # Zone 900
-        num_pm = cat.count_stars(require_clean=False, allow_double=True,
-                                 allow_galaxy=True, require_pm=True,
-                                 dec_min=89.8*RPD, dec_max=90.*RPD)
-        num_all = cat.count_stars(require_clean=False, allow_double=True,
-                                  allow_galaxy=True, require_pm=False,
-                                  dec_min=89.8*RPD, dec_max=90.*RPD)
-        self.assertEqual(num_all, 171)
-        self.assertEqual(num_all-num_pm, 10) # zone_stats says 9??
-
-        # Compare slicing directions
-        num_dec = 0
-        for idec in range(20):
-            num_dec += cat.count_stars(dec_min=0.2*idec*RPD,
-                                       dec_max=0.2*(idec+1)*RPD,
-                                       ra_min=60*RPD, ra_max=70*RPD)
-        num_ra = 0
-        for ira in range(10):
-            num_ra += cat.count_stars(dec_min=0., dec_max=4.*RPD,
-                                      ra_min=(ira+60)*RPD, ra_max=((ira+1)+60)*RPD)
-        self.assertEqual(num_dec, num_ra)
-
-        # Compare optimized RA search with non-optimized
-        for dec_idx in range(10):
-            dec_min = (dec_idx*10-90.)*RPD
-            dec_max = (dec_idx*10-89.8)*RPD
-            for ra_min_idx in range(10):
-                ra_min = ra_min_idx * 10 * RPD
-                ra_max = ra_min + 10*RPD
-                num_opt = cat.count_stars(dec_min=dec_min, dec_max=dec_max,
-                                          ra_min=ra_min, ra_max=ra_max)
-                num_no_opt = cat.count_stars(dec_min=dec_min, dec_max=dec_max,
-                                             ra_min=ra_min, ra_max=ra_max,
-                                             optimize_ra=False)
-                self.assertEqual(num_opt, num_no_opt)
-
-
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
