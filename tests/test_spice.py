@@ -2,6 +2,8 @@ import unittest
 
 import numpy as np
 
+from filecache import FCPath
+
 from starcat import SpiceStarCatalog
 
 
@@ -9,7 +11,8 @@ class Test_SpiceStarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
         cat = SpiceStarCatalog('hipparcos',
-                               dir='gs://rms-node-oops-resources/SPICE')
+                               dir=FCPath('gs://rms-node-oops-resources/SPICE',
+                                          anonymous=True))
 
         num_all = cat.count_stars()
         self.assertEqual(num_all, 117955)

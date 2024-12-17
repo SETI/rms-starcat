@@ -31,11 +31,11 @@ jobs:
 
       - name: Flake8
         run: |
-          flake8 filecache tests
+          flake8 starcat tests
 
       - name: Mypy
         run: |
-          mypy filecache
+          mypy starcat tests
 
   test:
     name: Test starcat

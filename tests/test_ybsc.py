@@ -1,13 +1,16 @@
 import numpy as np
 import unittest
 
+from filecache import FCPath
+
 from starcat import YBSCStarCatalog
 
 
 class Test_YBSCStarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
-        cat = YBSCStarCatalog('gs://rms-nav-star-catalogs/YBSC')
+        cat = YBSCStarCatalog(FCPath('gs://rms-nav-star-catalogs/YBSC',
+                                     anonymous=True))
 
         self.assertEqual(len(cat._stars), 9096)
         self.assertEqual(cat.count_stars(), 7519)

@@ -1,5 +1,6 @@
 import unittest
 
+from filecache import FCPath
 import numpy as np
 
 from starcat import UCAC4StarCatalog
@@ -8,7 +9,8 @@ from starcat import UCAC4StarCatalog
 class Test_UCAC4StarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
-        cat = UCAC4StarCatalog('gs://rms-nav-star-catalogs/UCAC4')
+        cat = UCAC4StarCatalog(FCPath('gs://rms-nav-star-catalogs/UCAC4',
+                                      anonymous=True))
 
         # Zone 1
         num_pm = cat.count_stars(require_clean=False, allow_double=True,
