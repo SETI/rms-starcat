@@ -10,6 +10,8 @@
 
 import numpy as np
 import os
+from pathlib import Path
+from typing import Any, Iterator, Optional, cast
 
 from filecache import FCPath
 
@@ -44,45 +46,45 @@ class YBSCStar(Star):
 
     This class includes attributes unique to the YBSC catalog."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Initialize the standard fields
         Star.__init__(self)
 
         # Initialize the YBSC-specific fields
-        self.name = None
-        self.durchmusterung_id = None
-        self.draper_number = None
-        self.sao_number = None
-        self.fk5_number = None
-        self.ir_source = None
-        self.ir_source_ref = None
-        self.double_star_code = None
-        self.aitken_designation = None
-        self.ads_components = None
-        self.variable_star_id = None
-        self.galactic_longitude = None
-        self.galactic_latitude = None
-        self.vmag_code = None
-        self.vmag_uncertainty_flag = None
-        self.b_v = None
-        self.u_b = None
-        self.r_i = None
-        self.spectral_class = None
-        self.spectral_class_code = None
-        self.parallax_type = None
-        self.parallax = None
-        self.radial_velocity = None
-        self.radial_velocity_comments = None
-        self.rotational_velocity_limit = None
-        self.rotational_velocity = None
-        self.rotational_velocity_uncertainty_flag = None
-        self.double_mag_diff = None
-        self.double_mag_sep = None
-        self.double_mag_components = None
-        self.multiple_num_components = None
-        self.temperature = None
+        self.name: Optional[str] = None
+        self.durchmusterung_id: Optional[str] = None
+        self.draper_number: Optional[int] = None
+        self.sao_number: Optional[int] = None
+        self.fk5_number: Optional[int] = None
+        self.ir_source: Optional[bool] = None
+        self.ir_source_ref: Optional[int] = None
+        self.double_star_code: Optional[str] = None
+        self.aitken_designation: Optional[str] = None
+        self.ads_components: Optional[str] = None
+        self.variable_star_id: Optional[str] = None
+        self.galactic_longitude: Optional[float] = None
+        self.galactic_latitude: Optional[float] = None
+        self.vmag_code: Optional[str] = None
+        self.vmag_uncertainty_flag: Optional[str] = None
+        self.b_v: Optional[float] = None
+        self.u_b: Optional[float] = None
+        self.r_i: Optional[float] = None
+        self.spectral_class: Optional[str] = None
+        self.spectral_class_code: Optional[str] = None
+        self.parallax_type: Optional[str] = None
+        self.parallax: Optional[float] = None
+        self.radial_velocity: Optional[float] = None
+        self.radial_velocity_comments: Optional[str] = None
+        self.rotational_velocity_limit: Optional[str] = None
+        self.rotational_velocity: Optional[float] = None
+        self.rotational_velocity_uncertainty_flag: Optional[str] = None
+        self.double_mag_diff: Optional[float] = None
+        self.double_mag_sep: Optional[float] = None
+        self.double_mag_components: Optional[str] = None
+        self.multiple_num_components: Optional[int] = None
+        self.temperature: Optional[float] = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         ret = Star.__str__(self)
 
         ret += f'Name "{self.name}"'
@@ -245,7 +247,9 @@ class YBSCStar(Star):
 # --------------------------------------------------------------------------------
 
 class YBSCStarCatalog(StarCatalog):
-    def __init__(self, dir=None):
+    def __init__(self,
+                 dir: Optional[str | Path | FCPath] = None) -> None:
+
         if dir is None:
             self._dirname = FCPath(os.environ['YBSC_DIR'])
         else:
@@ -263,33 +267,40 @@ class YBSCStarCatalog(StarCatalog):
                 star = self._record_to_star(record)
                 self._stars.append(star)
 
-    def _find_stars(self, ra_min, ra_max, dec_min, dec_max,
-                    vmag_min=None, vmag_max=None, allow_double=False, **kwargs):
-        """Yield the results for all stars.
+    def _find_stars(self,
+                    ra_min: float,
+                    ra_max: float,
+                    dec_min: float,
+                    dec_max: float,
+                    vmag_min: Optional[float] = None,
+                    vmag_max: Optional[float] = None,
+                    full_result: bool = True,
+                    **kwargs: Any) -> Iterator[YBSCStar]:
 
-        Optional arguments:      DEFAULT
-            ra_min, ra_max       0, 2PI    RA range in radians
-            dec_min, dec_max     -PI, PI   DEC range in radians
-            vmag_min, vmag_max     ALL     Magnitude range
-            allow_double         False     Allow double stars
-        """
+        # We do this here instead of as specific arguments because it works better
+        # with mypy
+        allow_double: bool = kwargs.pop('allow_double', False)
 
         for star in self._stars:
+            if star.ra is None or star.dec is None:
+                continue
             if not ra_min <= star.ra <= ra_max:
                 continue
             if not dec_min <= star.dec <= dec_max:
                 continue
-            if vmag_min and star.vmag < vmag_min:
-                continue
-            if vmag_max and star.vmag > vmag_max:
-                continue
+            if star.vmag is not None:
+                if vmag_min and star.vmag < vmag_min:
+                    continue
+                if vmag_max and star.vmag > vmag_max:
+                    continue
             if not allow_double and star.double_star_code != ' ':
                 continue
 
             yield star
 
     @staticmethod
-    def _record_to_star(record):
+    def _record_to_star(record: str) -> YBSCStar:
+
         star = YBSCStar()
 
         ###################
@@ -430,7 +441,7 @@ class YBSCStarCatalog(StarCatalog):
 #                                     RotVel
 
         star.pm_rac = float(record[148:154]) * AS_TO_RAD * YEAR_TO_SEC
-        star.pm_ra = star.pm_rac / np.cos(star.dec)
+        star.pm_ra = star.pm_rac / np.cos(cast(float, star.dec))
         star.pm_dec = float(record[154:160]) * AS_TO_RAD * YEAR_TO_SEC
 
         star.parallax_type = record[160:161]

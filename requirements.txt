@@ -1,6 +1,11 @@
 coverage
 cspyce
 flake8
+mypy
+myst-parser
 numpy
 pytest
 rms-filecache
+sphinx
+sphinxcontrib-napoleon
+sphinx-rtd-theme

@@ -7,7 +7,7 @@ from starcat import UCAC4StarCatalog
 
 class Test_UCAC4StarCatalog(unittest.TestCase):
 
-    def runTest(self):
+    def runTest(self) -> None:
         cat = UCAC4StarCatalog('gs://rms-nav-star-catalogs/UCAC4')
 
         # Zone 1

@@ -45,6 +45,9 @@ Issues = "https://github.com/SETI/rms-starcat/issues"
 [tool.setuptools]
 packages = ["starcat"]
 
+[tool.setuptools.package-data]
+"starcat" = ["py.typed"]
+
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
 write_to = "starcat/_version.py"

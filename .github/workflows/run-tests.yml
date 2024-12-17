@@ -11,6 +11,32 @@ on:
   #   - cron: "21 11 * * 0"
 
 jobs:
+  flake8:
+    name: Lint starcat
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+
+      - name: Flake8
+        run: |
+          flake8 filecache tests
+
+      - name: Mypy
+        run: |
+          mypy filecache
+
   test:
     name: Test starcat
     runs-on: ${{ matrix.os }}

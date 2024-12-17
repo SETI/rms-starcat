@@ -2,13 +2,14 @@ import unittest
 
 import numpy as np
 
-from .starcat import SpiceStarCatalog
+from starcat import SpiceStarCatalog
 
 
 class Test_SpiceStarCatalog(unittest.TestCase):
 
-    def runTest(self):
-        cat = SpiceStarCatalog('hipparcos')
+    def runTest(self) -> None:
+        cat = SpiceStarCatalog('hipparcos',
+                               dir='gs://rms-node-oops-resources/SPICE')
 
         num_all = cat.count_stars()
         self.assertEqual(num_all, 117955)

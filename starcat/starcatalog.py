@@ -4,6 +4,8 @@
 
 import inspect
 import numpy as np
+from typing import Any, Iterator, Optional
+
 
 AS_TO_DEG = 1 / 3600.
 AS_TO_RAD = np.radians(AS_TO_DEG)
@@ -176,55 +178,65 @@ SCLASS_TO_SURFACE_TEMP = {
 #
 #===============================================================================
 
-class Star(object):
+class Star:
     """A holder for star attributes.
 
     This is the base class that defines attributes common to all
     star catalogs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor for Star superclass."""
 
-        self.ra = None
+        self.ra: Optional[float] = None
         """Right ascension at J2000 epoch (radians)"""
 
-        self.ra_sigma = None
+        self.ra_sigma: Optional[float] = None
         """Right ascension error (radians)"""
 
-        self.dec = None
+        self.rac_sigma: Optional[float] = None
+        """Right ascension * cos(DEC) error (radians)"""
+
+        self.dec: Optional[float] = None
         """Declination at J2000 epoch (radians)"""
 
-        self.dec_sigma = None
+        self.dec_sigma: Optional[float] = None
         """Declination error (radians)"""
 
-        self.vmag = None
+        self.vmag: Optional[float] = None
         """Visual magnitude"""
 
-        self.vmag_sigma = None
+        self.vmag_sigma: Optional[float] = None
         """Visual magnitude error"""
 
-        self.pm_ra = None
+        self.pm_ra: Optional[float] = None
         """Proper motion in RA (radians/sec)"""
 
-        self.pm_ra_sigma = None
+        self.pm_ra_sigma: Optional[float] = None
         """Proper motion in RA error (radians/sec)"""
 
-        self.pm_dec = None
+        self.pm_rac: Optional[float] = None
+        """Proper motion in RA * cos(DEC) (radians/sec)"""
+
+        self.pm_rac_sigma: Optional[float] = None
+        """Proper motion in RA * cos(DEC) error (radians/sec)"""
+
+        self.pm_dec: Optional[float] = None
         """Proper motion in DEC (radians/sec)"""
 
-        self.pm_dec_sigma = None
+        self.pm_dec_sigma: Optional[float] = None
         """Proper motion in DEC error (radians/sec)"""
 
-        self.unique_number = None
+        self.unique_number: Optional[int] = None
         """Unique catalog number"""
 
-    def __str__(self):
-        ret = 'UNIQUE ID %d' % (self.unique_number)
+    def __str__(self) -> str:
+
+        ret = f'UNIQUE ID {self.unique_number:d}'
 
         if self.ra is not None:
-            ret += ' | RA %.7f' % (self.ra)
+            ret += f' | RA {self.ra:.7f}'
             if self.ra_sigma is not None:
-                ret += ' [+/- %.7f]' % (self.ra_sigma)
+                ret += f' [+/- {self.ra_sigma:.7f}]'
 
             ra_deg = np.degrees(self.ra)/15  # In hours
             hh = int(ra_deg)
@@ -236,11 +248,11 @@ class Star(object):
             ret += ')'
 
         if self.dec is not None:
-            ret += ' | DEC %.7f' % (self.dec)
+            ret += f' | DEC {self.dec:.7f}'
             if self.dec_sigma is not None:
-                ret += ' [+/- %.7f]' % (self.dec_sigma)
+                ret += f' [+/- {self.dec_sigma:.7f}]'
 
-            dec_deg = np.degrees(self.dec)  # In degrees
+            dec_deg = np.degrees(self.dec)
             neg = '+'
             if dec_deg < 0.:
                 neg = '-'
@@ -257,42 +269,52 @@ class Star(object):
         ret += '\n'
 
         if self.vmag is not None:
-            ret += 'VMAG %6.3f ' % (self.vmag)
+            ret += 'VMAG {self.vmag:6.3f} '
             if self.vmag_sigma is not None:
-                ret += '+/- %6.3f ' % (self.vmag_sigma)
+                ret += '+/- {self.vmag_sigma:6.3f} '
 
         if self.pm_ra is not None:
-            ret += ' | PM RA %.3f mas/yr ' % (self.pm_ra/MAS_TO_RAD/YEAR_TO_SEC)
+            ret += ' | PM RA %.3f mas/yr ' % (self.pm_ra / MAS_TO_RAD / YEAR_TO_SEC)
             if self.pm_ra_sigma:
-                ret += '+/- %.3f ' % (self.pm_ra_sigma/MAS_TO_RAD/YEAR_TO_SEC)
+                ret += '+/- %.3f ' % (self.pm_ra_sigma / MAS_TO_RAD / YEAR_TO_SEC)
 
         if self.pm_dec is not None:
-            ret += ' | PM DEC %.3f mas/yr ' % (self.pm_dec/MAS_TO_RAD/YEAR_TO_SEC)
+            ret += ' | PM DEC %.3f mas/yr ' % (self.pm_dec / MAS_TO_RAD / YEAR_TO_SEC)
             if self.pm_dec_sigma:
-                ret += '+/- %.3f ' % (self.pm_dec_sigma/MAS_TO_RAD/YEAR_TO_SEC)
+                ret += '+/- %.3f ' % (self.pm_dec_sigma / MAS_TO_RAD / YEAR_TO_SEC)
 
         ret += '\n'
 
         return ret
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """Return a dictionary containing all star attributes."""
+
         attribs = inspect.getmembers(self, lambda a: not inspect.isroutine(a))
         attribs = [a for a in attribs
                    if not (a[0].startswith('__') and a[0].endswith('__'))]
         return dict(attribs)
 
-    def from_dict(self, d):
+    def from_dict(self, d: dict[str, Any]) -> None:
+        """Set the attributes for this star based on the dictionary."""
+
         for key in list(d.keys()):
             setattr(self, key, d[key])
 
-    def ra_dec_with_pm(self, tdb):
+    def ra_dec_with_pm(self, tdb: float) -> tuple[float, float] | tuple[None, None]:
         """Return the star's RA and DEC adjusted for proper motion.
 
         If no proper motion is available, the original RA and DEC are returned.
 
-        Input:
-            tdb        time since the J2000 epoch in seconds
+        Parameters:
+            tdb: The time since the J2000 epoch in seconds.
+
+        Returns:
+            A tuple containing the RA and DEC adjusted for proper motion, if possible.
         """
+
+        if self.ra is None or self.dec is None:
+            return (None, None)
 
         if self.pm_ra is None or self.pm_dec is None:
             return (self.ra, self.dec)
@@ -300,11 +322,11 @@ class Star(object):
         return (self.ra + tdb*self.pm_ra, self.dec + tdb*self.pm_dec)
 
 
-class StarCatalog(object):
-    def __init__(self):
+class StarCatalog:
+    def __init__(self) -> None:
         pass
 
-    def count_stars(self, **kwargs):
+    def count_stars(self, **kwargs: Any) -> int:
         """Count the stars that match the given search criteria."""
 
         count = 0
@@ -312,14 +334,26 @@ class StarCatalog(object):
             count += 1
         return count
 
-    def find_stars(self, ra_min=0, ra_max=TWOPI, dec_min=-HALFPI, dec_max=HALFPI,
-                   **kwargs):
-        """Find the stars that match the given search criteria.
+    def find_stars(self,
+                   ra_min: float = 0,
+                   ra_max: float = TWOPI,
+                   dec_min: float = -HALFPI,
+                   dec_max: float = HALFPI,
+                   full_result: bool = True,
+                   **kwargs: Any) -> Iterator[Star]:
+        """Yield the stars that match the given search criteria.
 
-        Optional arguments:      DEFAULT
-            ra_min, ra_max       0, 2PI    RA range in radians
-            dec_min, dec_max     -PI, PI   DEC range in radians
-            vmag_min, vmag_max     ALL     Magnitude range
+        Parameters:
+            ra_min: The minimum RA.
+            ra_max: The maximum RA.
+            dec_min: The minimum DEC.
+            dec_max: The maximum DEC.
+            full_result: If True, fill in all available fields of the resulting
+                :class:`Star`. If False, some fields will not be filled in to save
+                time. This is most useful when counting stars.
+
+        Yields:
+            The :class:`Star` objects that meet the given constraints.
         """
 
         ra_min = np.clip(ra_min, 0., TWOPI)
@@ -331,48 +365,74 @@ class StarCatalog(object):
             if dec_min > dec_max:
                 # Split into four searches
                 for star in self._find_stars(0., ra_max, -HALFPI, dec_max,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
                 for star in self._find_stars(ra_min, TWOPI, -HALFPI, dec_max,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
                 for star in self._find_stars(0., ra_max, dec_min, HALFPI,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
                 for star in self._find_stars(ra_min, TWOPI, dec_min, HALFPI,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
             else:
                 # Split into two searches - RA
                 for star in self._find_stars(0., ra_max, dec_min, dec_max,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
                 for star in self._find_stars(ra_min, TWOPI, dec_min, dec_max,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
         else:
             if dec_min > dec_max:
                 # Split into two searches - DEC
                 for star in self._find_stars(ra_min, ra_max, -HALFPI, dec_max,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
                 for star in self._find_stars(ra_min, ra_max, dec_min, HALFPI,
+                                             full_result=full_result,
                                              **kwargs):
                     yield star
             else:
                 # No need to split at all
-                for star in self._find_stars(ra_min, ra_max,
-                                             dec_min, dec_max, **kwargs):
+                for star in self._find_stars(ra_min, ra_max, dec_min, dec_max,
+                                             full_result=full_result,
+                                             **kwargs):
                     yield star
 
-    def _find_stars(self, **kwargs):
+    def _find_stars(self,
+                    ra_min: float,
+                    ra_max: float,
+                    dec_min: float,
+                    dec_max: float,
+                    vmag_min: Optional[float] = None,
+                    vmag_max: Optional[float] = None,
+                    full_result: bool = True,
+                    **kwargs: Any) -> Iterator[Star]:
         raise NotImplementedError
 
     @staticmethod
-    def sclass_from_bv(b, v):
-        """Return a star's spectral class given photometric B and V."""
+    def sclass_from_bv(b: float,
+                       v: float) -> str | None:
+        """Return a star's spectral class given photometric B and V.
 
-        bmv = b-v
+        Parameters:
+            b: The photometric B value.
+            v: The photometric V value.
+
+        Returns:
+            The spectral class, if available.
+        """
+
+        bmv = b - v
 
         best_sclass = None
         best_resid = 1e38
@@ -393,10 +453,19 @@ class StarCatalog(object):
         return None
 
     @staticmethod
-    def temperature_from_sclass(sclass):
-        """Return a star's temperature (K) given its spectral class."""
+    def temperature_from_sclass(sclass: Optional[str]) -> float | None:
+        """Return a star's temperature (K) given its spectral class.
 
-        if sclass[-1] == '*':  # This happens on some SPICE catalog stars
+        Parameters:
+            sclass: The spectral class.
+
+        Returns:
+            The temperature associated with the spectral class.
+        """
+
+        if sclass is None:
+            return None
+        if sclass.endswith('*'):  # This happens on some SPICE catalog stars
             sclass = sclass[:-1]
         sclass = sclass.strip().upper()
         try:
@@ -405,8 +474,15 @@ class StarCatalog(object):
             return None
 
     @staticmethod
-    def bmv_from_sclass(sclass):
-        """Return a star's B-V color given its spectral class."""
+    def bmv_from_sclass(sclass: str) -> float | None:
+        """Return a star's B-V color given its spectral class.
+
+        Parameters:
+            sclass: The spectral class.
+
+        Returns:
+            The B-V color associated with the spectral class.
+        """
 
         if sclass[-1] == '*':  # This happens on some SPICE catalog stars
             sclass = sclass[:-1]

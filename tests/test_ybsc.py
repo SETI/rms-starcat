@@ -6,7 +6,7 @@ from starcat import YBSCStarCatalog
 
 class Test_YBSCStarCatalog(unittest.TestCase):
 
-    def runTest(self):
+    def runTest(self) -> None:
         cat = YBSCStarCatalog('gs://rms-nav-star-catalogs/YBSC')
 
         self.assertEqual(len(cat._stars), 9096)
