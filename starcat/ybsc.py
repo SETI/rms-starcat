@@ -8,6 +8,8 @@
 #     =1964BS....C......0H
 # From ftp://cdsarc.u-strasbg.fr/cats/V/50/1
 
+from __future__ import annotations
+
 import numpy as np
 import os
 from pathlib import Path

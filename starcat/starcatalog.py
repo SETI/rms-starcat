@@ -2,6 +2,8 @@
 # starcat/starcatalog.py
 ################################################################################
 
+from __future__ import annotations
+
 import inspect
 import numpy as np
 from typing import Any, Iterator, Optional
