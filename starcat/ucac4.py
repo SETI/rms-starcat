@@ -70,6 +70,7 @@ class UCAC4Star(Star):
     This class includes attributes unique to the UCAC4 catalog."""
 
     def __init__(self) -> None:
+
         # Initialize the standard fields
         Star.__init__(self)
 
@@ -104,6 +105,7 @@ class UCAC4Star(Star):
         self.temperature: Optional[float] = None
 
     def __str__(self) -> str:
+
         ret = Star.__str__(self)
 
         ret += 'OBJTYPE '
@@ -276,6 +278,7 @@ assert struct.calcsize(UCAC4_FMT_RA) == UCAC4_RECORD_SIZE_RA
 class UCAC4StarCatalog(StarCatalog):
     def __init__(self,
                  dir: Optional[str | Path | FCPath] = None) -> None:
+
         if dir is None:
             self._dirname = FCPath(os.environ["UCAC4_DIR"])
         else:
@@ -291,6 +294,9 @@ class UCAC4StarCatalog(StarCatalog):
                     vmag_max: Optional[float] = None,
                     full_result: bool = True,
                     **kwargs: Any) -> Iterator[UCAC4Star]:
+
+        # We do this here instead of as specific arguments because it works better
+        # with mypy
         require_clean: bool = kwargs.pop('require_clean', True)
         allow_double: bool = kwargs.pop('allow_double', False)
         allow_galaxy: bool = kwargs.pop('allow_galaxy', False)
