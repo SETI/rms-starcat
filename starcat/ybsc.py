@@ -253,7 +253,7 @@ class YBSCStarCatalog(StarCatalog):
                  dir: Optional[str | Path | FCPath] = None) -> None:
 
         if dir is None:
-            self._dirname = FCPath(os.environ['YBSC_DIR'])
+            self._dirname = FCPath(os.environ['YBSC_PATH'])
         else:
             self._dirname = FCPath(dir)
 

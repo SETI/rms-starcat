@@ -282,7 +282,7 @@ class UCAC4StarCatalog(StarCatalog):
                  dir: Optional[str | Path | FCPath] = None) -> None:
 
         if dir is None:
-            self._dirname = FCPath(os.environ["UCAC4_DIR"])
+            self._dirname = FCPath(os.environ['UCAC4_PATH'])
         else:
             self._dirname = FCPath(dir)
         self.debug_level = 0

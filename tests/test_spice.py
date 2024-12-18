@@ -11,8 +11,8 @@ class Test_SpiceStarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
         cat = SpiceStarCatalog('hipparcos',
-                               dir=FCPath('gs://rms-node-oops-resources/SPICE',
-                                          anonymous=False))
+                               dir=FCPath('gs://rms-node-star-catalogs/SPICE',
+                                          anonymous=True))
 
         num_all = cat.count_stars()
         self.assertEqual(num_all, 117955)
