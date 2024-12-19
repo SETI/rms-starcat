@@ -25,11 +25,11 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Utilities",
   "License :: OSI Approved :: Apache Software License",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: POSIX :: Linux",
   "Operating System :: Microsoft :: Windows"
@@ -43,6 +43,9 @@ Issues = "https://github.com/SETI/rms-starcat/issues"
 
 [tool.setuptools]
 packages = ["starcat"]
+
+[tool.setuptools.package-data]
+"starcat" = ["py.typed"]
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
