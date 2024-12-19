@@ -24,8 +24,8 @@
 
 # Introduction
 
-`starcat` is a set of routines for converting between NumPy floating point and complex
-scalars/arrays and starcat-format single- and double-precision floats.
+`starcat` is a set of classes for reading and searching star catalogs. Currently NAIF SPICE
+star catalogs, the Yale Bright Star Catalog (YBSC), and UCAC4 are supported.
 
 `starcat` is a product of the [PDS Ring-Moon Systems Node](https://pds-rings.seti.org).
 
@@ -39,55 +39,69 @@ pip install rms-starcat
 
 # Getting Started
 
-The `starcat` module provides two functions for converting *from* starcat-format floats:
+The `starcat` module provides the `StarCatalog` class, which is the superclass for classes
+that handle specific star catalogs. Each star catalog class takes an optional directory
+path to point at the root of the star catalog data; if no directory path is provided,
+the contents of an environment variable is used instead. Each path can be a full URL
+as supported by [`rms-filecache`](https://rms-filecache.readthedocs.io/en/latest/),
+allowing the catalog data to be downloaded (and cached locally) at runtime.
 
-- [`from_starcat32`](https://rms-starcat.readthedocs.io/en/latest/module.html#starcat.from_starcat32):
-  Interpret a series of bytes or NumPy array as one or more starcat single-precision floats
-  and convert them to a NumPy float or complex scalar or array.
-- [`from_starcat64`](https://rms-starcat.readthedocs.io/en/latest/module.html#starcat.from_starcat64):
-  Interpret a series of bytes NumPy array as one or more starcat double-precision floats and
-  convert them to a NumPy float or complex scalar or array.
+- `SpiceStarCatalog`
+  - The `dir` argument, if specified, must point to a directory containing NAIF SPICE
+    kernels.
+  - Otherwise, the environment variable `SPICE_PATH`, if defined, must contain a `Stars`
+    subdirectory with NAIF SPICE kernels.
+  - Otherwise, the environment variable `OOPS_RESOURCES` must contain a `SPICE/Stars`
+    subdirectory.
+- `YBSCStarCatalog`
+  - The `dir` argument, if specified, must point to a directory containing the file
+    `catalog`.
+  - Otherwise, the environment variable `YBSC_PATH` must point to that directory.
+- `UCAC4StarCatalog`
+  - The `dir` argument, if specified, must point to a directory containing the directory
+    `u4b`.
+  - Otherwise, the environment variable `UCAC4_PATH` must point to that directory.
 
-and two functions for converting *to* starcat-format floats::
+Each star catalog returns stars as a class that is a subclass of `Star`. Each subclass
+contains the attributes provided by that star catalog, and none are guaranteed to be
+filled in for all stars:
 
-- [`to_starcat32`](https://rms-starcat.readthedocs.io/en/latest/module.html#starcat.to_starcat32):
-  Convert a NumPy float or complex scalar or array to a NumPy array containing the
-  binary representation of starcat single-precision floats. Such an array can not be
-  used for arithmetic operations since it is not in IEEE 754 format.
-- [`to_starcat32_bytes`](https://rms-starcat.readthedocs.io/en/latest/module.html#starcat.to_starcat32_bytes):
-  Convert a NumPy float or complex scalar or array to a Python `bytes` object containing
-  the binary representation of starcat single-precision floats.
+- `SpiceStar`
+- `YBSCStar`
+- `UCAC4Star`
 
-Note that there are no functions to convert a NumPy array to starcat double-precision format.
-
-Details of each function are available in the [module documentation](https://rms-starcat.readthedocs.io/en/latest/module.html).
+Details of each class are available in the [module documentation](https://rms-starcat.readthedocs.io/en/latest/module.html).
 
 Basic operation is as follows:
 
 ```python
-import starcat
-b = starcat.to_starcat32([1., 2., 3.])
-print(f'b = {b!r}')
-ba = starcat.to_starcat32_bytes([1., 2., 3.])
-print(f'ba = {ba!r}')
-v = starcat.from_starcat32(b)
-print(f'v = {v!r}')
-va = starcat.from_starcat32(ba)
-print(f'va = {va!r}')
+from starcat import YBSCStarCatalog
+import numpy as np
+cat = YBSCStarCatalog()
+ra_vega = 279.2333
+dec_vega = 38.7836
+vega_list = list(cat.find_stars(ra_min=np.radians(ra_vega-0.1),
+                                ra_max=np.radians(ra_vega+0.1),
+                                dec_min=np.radians(dec_vega-0.1),
+                                dec_max=np.radians(dec_vega+0.1)))
+
+assert len(vega_list) == 1
+print(vega_list[0])
 ```
 
 yields:
 
-```python
-b = array([2.3138e-41, 2.3318e-41, 2.3407e-41], dtype=float32)
-ba = b'\x80@\x00\x00\x00A\x00\x00@A\x00\x00'
-v = array([1., 2., 3.], dtype=float32)
-va = array([1., 2., 3.], dtype=float32)
 ```
-
-As NASA data products stored as starcat-format floats are often provided in JPL's VICAR file
-format, you may also be interested in the `rms-vicar` package
-([documentation](https://rms-vicar.readthedocs.io/en/latest)).
+UNIQUE ID 7001 | RA 279.2345833° (18h36m56.300s) | DEC 38.7836111° (+038d47m1.000s)
+VMAG  0.030  | PM RA 259.135 mas/yr  | PM DEC 286.000 mas/yr
+TEMP 10800 | SCLASS A0Va
+Name "3Alp Lyr" | Durch "BD+38 3238" | Draper 172167 | SAO 67174 | FK5 699
+IR 1 Ref NASA | Multiple " " | Aitken 11510 None | Variable "Alp Lyr"
+SCLASS Code   | Galactic LON 67.44 LAT 19.24
+B-V 0.0 | U-B -0.01 | R-I -0.03
+Parallax TRIG 0.1230000 arcsec | RadVel -14.0 km/s V  | RotVel (v sin i) 15.0 km/s
+Double mag diff 10.40 Sep 62.80 arcsec Components AB # 5
+```
 
 # Contributing
 

@@ -183,44 +183,49 @@ SCLASS_TO_SURFACE_TEMP = {
 class Star:
     """A holder for star attributes.
 
-    This is the base class that defines attributes common to all
-    star catalogs."""
+    This is the base class that defines attributes common to all or most
+    star catalogs. Note that fields vary among star catalogs and individual
+    stars and there is no guarantee a particular field will be filled in.
+    """
 
     def __init__(self) -> None:
-        """Constructor for Star superclass."""
+        """Constructor for Star; additional attributes are available from subclasses."""
+
+        self.unique_number: Optional[int] = None
+        """Unique catalog number (may not be unique across catalogs)"""
 
         self.ra: Optional[float] = None
         """Right ascension at J2000 epoch (radians)"""
 
         self.ra_sigma: Optional[float] = None
-        """Right ascension error (radians)"""
+        """Right ascension uncertainty (radians)"""
 
         self.rac_sigma: Optional[float] = None
-        """Right ascension * cos(DEC) error (radians)"""
+        """Right ascension * cos(DEC) uncertainty (radians)"""
 
         self.dec: Optional[float] = None
         """Declination at J2000 epoch (radians)"""
 
         self.dec_sigma: Optional[float] = None
-        """Declination error (radians)"""
+        """Declination uncertainty (radians)"""
 
         self.vmag: Optional[float] = None
         """Visual magnitude"""
 
         self.vmag_sigma: Optional[float] = None
-        """Visual magnitude error"""
+        """Visual magnitude uncertainty"""
 
         self.pm_ra: Optional[float] = None
         """Proper motion in RA (radians/sec)"""
 
         self.pm_ra_sigma: Optional[float] = None
-        """Proper motion in RA error (radians/sec)"""
+        """Proper motion in RA uncertainty (radians/sec)"""
 
         self.pm_rac: Optional[float] = None
         """Proper motion in RA * cos(DEC) (radians/sec)"""
 
         self.pm_rac_sigma: Optional[float] = None
-        """Proper motion in RA * cos(DEC) error (radians/sec)"""
+        """Proper motion in RA * cos(DEC) uncertainty (radians/sec)"""
 
         self.pm_dec: Optional[float] = None
         """Proper motion in DEC (radians/sec)"""
@@ -228,17 +233,20 @@ class Star:
         self.pm_dec_sigma: Optional[float] = None
         """Proper motion in DEC error (radians/sec)"""
 
-        self.unique_number: Optional[int] = None
-        """Unique catalog number"""
+        self.spectral_class: Optional[str] = None
+        """Spectral class"""
+
+        self.temperature: Optional[float] = None
+        """Star temperature (usually derived from spectral class)"""
 
     def __str__(self) -> str:
 
         ret = f'UNIQUE ID {self.unique_number:d}'
 
         if self.ra is not None:
-            ret += f' | RA {self.ra:.7f}'
+            ret += f' | RA {np.degrees(self.ra):.7f}°'
             if self.ra_sigma is not None:
-                ret += f' [+/- {self.ra_sigma:.7f}]'
+                ret += f' [+/- {np.degrees(self.ra_sigma):.7f}°]'
 
             ra_deg = np.degrees(self.ra)/15  # In hours
             hh = int(ra_deg)
@@ -250,9 +258,9 @@ class Star:
             ret += ')'
 
         if self.dec is not None:
-            ret += f' | DEC {self.dec:.7f}'
+            ret += f' | DEC {np.degrees(self.dec):.7f}°'
             if self.dec_sigma is not None:
-                ret += f' [+/- {self.dec_sigma:.7f}]'
+                ret += f' [+/- {np.degrees(self.dec_sigma):.7f}°]'
 
             dec_deg = np.degrees(self.dec)
             neg = '+'
@@ -271,9 +279,9 @@ class Star:
         ret += '\n'
 
         if self.vmag is not None:
-            ret += 'VMAG {self.vmag:6.3f} '
+            ret += f'VMAG {self.vmag:6.3f} '
             if self.vmag_sigma is not None:
-                ret += '+/- {self.vmag_sigma:6.3f} '
+                ret += f'+/- {self.vmag_sigma:6.3f} '
 
         if self.pm_ra is not None:
             ret += ' | PM RA %.3f mas/yr ' % (self.pm_ra / MAS_TO_RAD / YEAR_TO_SEC)
@@ -286,6 +294,12 @@ class Star:
                 ret += '+/- %.3f ' % (self.pm_dec_sigma / MAS_TO_RAD / YEAR_TO_SEC)
 
         ret += '\n'
+
+        if self.temperature is None:
+            ret += 'TEMP N/A'
+        else:
+            ret += f'TEMP {self.temperature:5d}'
+        ret += f' | SCLASS {self.spectral_class:s}'
 
         return ret
 
@@ -322,137 +336,6 @@ class Star:
             return (self.ra, self.dec)
 
         return (self.ra + tdb*self.pm_ra, self.dec + tdb*self.pm_dec)
-
-
-class StarCatalog:
-    def __init__(self) -> None:
-        pass
-
-    def count_stars(self, **kwargs: Any) -> int:
-        """Count the stars that match the given search criteria."""
-
-        count = 0
-        for _ in self.find_stars(full_result=False, **kwargs):
-            count += 1
-        return count
-
-    def find_stars(self,
-                   ra_min: float = 0,
-                   ra_max: float = TWOPI,
-                   dec_min: float = -HALFPI,
-                   dec_max: float = HALFPI,
-                   full_result: bool = True,
-                   **kwargs: Any) -> Iterator[Star]:
-        """Yield the stars that match the given search criteria.
-
-        Parameters:
-            ra_min: The minimum RA.
-            ra_max: The maximum RA.
-            dec_min: The minimum DEC.
-            dec_max: The maximum DEC.
-            full_result: If True, fill in all available fields of the resulting
-                :class:`Star`. If False, some fields will not be filled in to save
-                time. This is most useful when counting stars.
-
-        Yields:
-            The :class:`Star` objects that meet the given constraints.
-        """
-
-        ra_min = np.clip(ra_min, 0., TWOPI)
-        ra_max = np.clip(ra_max, 0., TWOPI)
-        dec_min = np.clip(dec_min, -HALFPI, HALFPI)
-        dec_max = np.clip(dec_max, -HALFPI, HALFPI)
-
-        if ra_min > ra_max:
-            if dec_min > dec_max:
-                # Split into four searches
-                for star in self._find_stars(0., ra_max, -HALFPI, dec_max,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-                for star in self._find_stars(ra_min, TWOPI, -HALFPI, dec_max,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-                for star in self._find_stars(0., ra_max, dec_min, HALFPI,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-                for star in self._find_stars(ra_min, TWOPI, dec_min, HALFPI,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-            else:
-                # Split into two searches - RA
-                for star in self._find_stars(0., ra_max, dec_min, dec_max,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-                for star in self._find_stars(ra_min, TWOPI, dec_min, dec_max,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-        else:
-            if dec_min > dec_max:
-                # Split into two searches - DEC
-                for star in self._find_stars(ra_min, ra_max, -HALFPI, dec_max,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-                for star in self._find_stars(ra_min, ra_max, dec_min, HALFPI,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-            else:
-                # No need to split at all
-                for star in self._find_stars(ra_min, ra_max, dec_min, dec_max,
-                                             full_result=full_result,
-                                             **kwargs):
-                    yield star
-
-    def _find_stars(self,
-                    ra_min: float,
-                    ra_max: float,
-                    dec_min: float,
-                    dec_max: float,
-                    vmag_min: Optional[float] = None,
-                    vmag_max: Optional[float] = None,
-                    full_result: bool = True,
-                    **kwargs: Any) -> Iterator[Star]:
-        raise NotImplementedError
-
-    @staticmethod
-    def sclass_from_bv(b: float,
-                       v: float) -> str | None:
-        """Return a star's spectral class given photometric B and V.
-
-        Parameters:
-            b: The photometric B value.
-            v: The photometric V value.
-
-        Returns:
-            The spectral class, if available.
-        """
-
-        bmv = b - v
-
-        best_sclass = None
-        best_resid = 1e38
-
-        min_bmv = 1e38
-        max_bmv = -1e38
-        for sclass, sbmv in SCLASS_TO_B_MINUS_V.items():
-            min_bmv = min(min_bmv, sbmv)
-            max_bmv = max(max_bmv, sbmv)
-            resid = abs(sbmv-bmv)
-            if resid < best_resid:
-                best_resid = resid
-                best_sclass = sclass
-
-        if min_bmv <= bmv <= max_bmv:
-            return best_sclass
-
-        return None
 
     @staticmethod
     def temperature_from_sclass(sclass: Optional[str]) -> float | None:
@@ -493,3 +376,147 @@ class StarCatalog:
             return SCLASS_TO_B_MINUS_V[sclass]
         except KeyError:
             return None
+
+    @staticmethod
+    def sclass_from_bv(b: float,
+                       v: float) -> str | None:
+        """Return a star's spectral class given photometric B and V.
+
+        Parameters:
+            b: The photometric B value.
+            v: The photometric V value.
+
+        Returns:
+            The spectral class, if available.
+        """
+
+        bmv = b - v
+
+        best_sclass = None
+        best_resid = 1e38
+
+        min_bmv = 1e38
+        max_bmv = -1e38
+        for sclass, sbmv in SCLASS_TO_B_MINUS_V.items():
+            min_bmv = min(min_bmv, sbmv)
+            max_bmv = max(max_bmv, sbmv)
+            resid = abs(sbmv-bmv)
+            if resid < best_resid:
+                best_resid = resid
+                best_sclass = sclass
+
+        if min_bmv <= bmv <= max_bmv:
+            return best_sclass
+
+        return None
+
+
+class StarCatalog:
+    def __init__(self) -> None:
+        self.debug_level = 0
+
+    def count_stars(self, **kwargs: Any) -> int:
+        """Count the stars that match the given search criteria."""
+
+        count = 0
+        for _ in self.find_stars(full_result=False, **kwargs):
+            count += 1
+        return count
+
+    def find_stars(self,
+                   ra_min: float = 0,
+                   ra_max: float = TWOPI,
+                   dec_min: float = -HALFPI,
+                   dec_max: float = HALFPI,
+                   vmag_min: Optional[float] = None,
+                   vmag_max: Optional[float] = None,
+                   full_result: bool = True,
+                   **kwargs: Any) -> Iterator[Star]:
+        """Yield the stars that match the given search criteria.
+
+        Parameters:
+            ra_min: The minimum RA.
+            ra_max: The maximum RA.
+            dec_min: The minimum DEC.
+            dec_max: The maximum DEC.
+            vmag_min: The minimum visual magnitude.
+            vmag_max: The maximum visual magnitude.
+            full_result: If True, fill in all available fields of the resulting
+                :class:`Star`. If False, some fields will not be filled in to save
+                time. This is most useful when counting stars.
+
+        Yields:
+            The :class:`Star` objects that meet the given constraints.
+        """
+
+        ra_min = np.clip(ra_min, 0., TWOPI)
+        ra_max = np.clip(ra_max, 0., TWOPI)
+        dec_min = np.clip(dec_min, -HALFPI, HALFPI)
+        dec_max = np.clip(dec_max, -HALFPI, HALFPI)
+
+        if ra_min > ra_max:
+            if dec_min > dec_max:
+                # Split into four searches
+                for star in self._find_stars(0., ra_max, -HALFPI, dec_max,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+                for star in self._find_stars(ra_min, TWOPI, -HALFPI, dec_max,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+                for star in self._find_stars(0., ra_max, dec_min, HALFPI,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+                for star in self._find_stars(ra_min, TWOPI, dec_min, HALFPI,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+            else:
+                # Split into two searches - RA
+                for star in self._find_stars(0., ra_max, dec_min, dec_max,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+                for star in self._find_stars(ra_min, TWOPI, dec_min, dec_max,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+        else:
+            if dec_min > dec_max:
+                # Split into two searches - DEC
+                for star in self._find_stars(ra_min, ra_max, -HALFPI, dec_max,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+                for star in self._find_stars(ra_min, ra_max, dec_min, HALFPI,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+            else:
+                # No need to split at all
+                for star in self._find_stars(ra_min, ra_max, dec_min, dec_max,
+                                             vmag_min=vmag_min, vmag_max=vmag_max,
+                                             full_result=full_result,
+                                             **kwargs):
+                    yield star
+
+    def _find_stars(self,
+                    ra_min: float,
+                    ra_max: float,
+                    dec_min: float,
+                    dec_max: float,
+                    vmag_min: Optional[float] = None,
+                    vmag_max: Optional[float] = None,
+                    full_result: bool = True,
+                    **kwargs: Any) -> Iterator[Star]:
+        raise NotImplementedError

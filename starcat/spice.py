@@ -17,41 +17,45 @@ from .starcatalog import Star, StarCatalog
 class SpiceStar(Star):
     """A holder for star attributes.
 
-    This class includes attributes unique to stars in SPICE catalogs."""
+    This class includes attributes unique to stars in SPICE catalogs.
+
+    A SpiceStar only supports these attributes: `unique_number`, `ra`, `ra_sigma`, `dec`,
+    `dec_sigma`, `vmag`, `spectral_class`, `temperature`
+    """
 
     def __init__(self) -> None:
-
-        Star.__init__(self)
-
-        self.spectral_class: Optional[str] = None
-        """The spectral class"""
-
-        self.temperature: Optional[float] = None
-        """The temperature of the star"""
+        # Initialize the standard fields
+        super().__init__()
 
 
 class SpiceStarCatalog(StarCatalog):
     def __init__(self,
                  name: str,
                  dir: Optional[str | Path | FCPath] = None) -> None:
+        """Create a SpiceStarCatalog.
 
+        Parameters:
+            name: The name of the SPICE catalog without the extension, such as
+                ``hipparcos``, ``ppm``, or ``tycho2``.
+            dir: The path to the star catalog directory (may be a URL). Within
+                this directory should be the kernels for the requested name
+                (``name.dbd`` and ``name.xdb``).
+        """
+
+        super().__init__()
         if dir is None:
             try:
-                dir = FCPath(os.environ['SPICE_PATH'])
+                dir = FCPath(os.environ['SPICE_PATH']) / 'Stars'
             except KeyError:
-                dir = FCPath(os.environ['OOPS_RESOURCES']) / 'SPICE'
+                dir = FCPath(os.environ['OOPS_RESOURCES']) / 'SPICE' / 'Stars'
             except KeyError:
                 raise RuntimeError(
                     'SPICE_PATH and OOPS_RESOURCES environment variables not set')
         else:
             dir = FCPath(dir)
-        self._filename = dir / 'Stars' / f'{name}.bdb'
+        self._filename = dir / f'{name}.bdb'
         local_path = self._filename.retrieve()
         self._catalog = cspyce.stcl01(local_path)[0]
-        self.debug_level = 0
-
-        # (ra, dec, ra_uncertainty, dec_uncertainty,
-        #  catalog_number, spectral_type, v_magnitude)
 
     def _find_stars(self,
                     ra_min: float,
@@ -81,8 +85,10 @@ class SpiceStarCatalog(StarCatalog):
                     continue
 
             if full_result:
-                star.temperature = self.temperature_from_sclass(star.spectral_class)
-                if self.debug_level:
-                    print('OK!')
+                star.temperature = Star.temperature_from_sclass(star.spectral_class)
+
+            if self.debug_level:
+                print(star)
+                print('-' * 80)
 
             yield star

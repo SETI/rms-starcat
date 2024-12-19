@@ -21,90 +21,187 @@ from .starcatalog import (HALFPI,
                           StarCatalog
                           )
 
-UCAC4_OBJ_TYPE_CLEAN = 0
-UCAC4_OBJ_TYPE_NEAR_OVEREXPOSED = 1
-UCAC4_OBJ_TYPE_STREAK = 2
-UCAC4_OBJ_TYPE_HPM = 3
-UCAC4_OBJ_TYPE_EXT_HPM = 4
-UCAC4_OBJ_TYPE_POOR_PM = 5
-UCAC4_OBJ_TYPE_SUBST_ASTROMETRY = 6
-UCAC4_OBJ_TYPE_SUPPL = 7
-UCAC4_OBJ_TYPE_HPM_NOT_MATCHED = 8
-UCAC4_OBJ_TYPE_HPM_DISCREPANT = 9
-
-UCAC4_OBJ_TYPE_STRINGS = ['CLEAN', 'NEAR_OVEREXPOSED', 'STREAK', 'HPM',
-                          'EXT_HPM', 'POOR_PM', 'SUBST_ASTROMETRY', 'SUPPL',
-                          'HPM_NOT_MATCHED', 'HPM_DISCREPANT']
-
-#CATMATCH_TYCHO = 0
-#CATMATCH_AC2000 = 1
-#CATMATCH_AGK2_BONN = 2
-#CATMATCH_AGK2_HAMBURG = 3
-#CATMATCH_ZONE_ASTROGRAPH = 4
-#CATMATCH_BLACK_BIRCH = 5
-#CATMATCH_LICK_ASTROGRAPH = 6
-#CATMATCH_NPM_LICK = 7
-#CATMATCH_SPM_YSJ1 = 8
-
-UCAC4_DOUBLE_STAR_FLAG_SINGLE = 0
-UCAC4_DOUBLE_STAR_FLAG_COMP1 = 1
-UCAC4_DOUBLE_STAR_FLAG_COMP2 = 2
-UCAC4_DOUBLE_STAR_FLAG_BLENDED = 3
-
-UCAC4_DOUBLE_STAR_FLAG_STRINGS = ['SINGLE', 'COMP1', 'COMP2', 'BLENDED']
-
-UCAC4_DOUBLE_STAR_TYPE_NONE = 0
-UCAC4_DOUBLE_STAR_TYPE_1PEAK = 1
-UCAC4_DOUBLE_STAR_TYPE_2PEAK = 2
-UCAC4_DOUBLE_STAR_TYPE_SECONDARY_PEAK = 3
-UCAC4_DOUBLE_STAR_TYPE_1PEAK_FIT = 4
-UCAC4_DOUBLE_STAR_TYPE_2PEAK_FIT = 5
-UCAC4_DOUBLE_STAR_TYPE_SECONDARY_PEAK_FIT = 6
-
-UCAC4_DOUBLE_STAR_TYPE_STRINGS = ['NONE', '1PEAK', '2PEAK', 'SECONDARY_PEAK',
-                                  '1PEAK_FIT', '2PEAK_FIT',
-                                  'SECONDARY_PEAK_FIT']
-
 
 class UCAC4Star(Star):
     """A holder for star attributes.
 
     This class includes attributes unique to the UCAC4 catalog."""
 
-    def __init__(self) -> None:
+    UCAC4_OBJ_TYPE_CLEAN = 0
+    UCAC4_OBJ_TYPE_NEAR_OVEREXPOSED = 1
+    UCAC4_OBJ_TYPE_STREAK = 2
+    UCAC4_OBJ_TYPE_HPM = 3
+    UCAC4_OBJ_TYPE_EXT_HPM = 4
+    UCAC4_OBJ_TYPE_POOR_PM = 5
+    UCAC4_OBJ_TYPE_SUBST_ASTROMETRY = 6
+    UCAC4_OBJ_TYPE_SUPPL = 7
+    UCAC4_OBJ_TYPE_HPM_NOT_MATCHED = 8
+    UCAC4_OBJ_TYPE_HPM_DISCREPANT = 9
 
+    UCAC4_OBJ_TYPE_STRINGS = ['CLEAN', 'NEAR_OVEREXPOSED', 'STREAK', 'HPM',
+                              'EXT_HPM', 'POOR_PM', 'SUBST_ASTROMETRY', 'SUPPL',
+                              'HPM_NOT_MATCHED', 'HPM_DISCREPANT']
+
+    #CATMATCH_TYCHO = 0
+    #CATMATCH_AC2000 = 1
+    #CATMATCH_AGK2_BONN = 2
+    #CATMATCH_AGK2_HAMBURG = 3
+    #CATMATCH_ZONE_ASTROGRAPH = 4
+    #CATMATCH_BLACK_BIRCH = 5
+    #CATMATCH_LICK_ASTROGRAPH = 6
+    #CATMATCH_NPM_LICK = 7
+    #CATMATCH_SPM_YSJ1 = 8
+
+    UCAC4_DOUBLE_STAR_FLAG_SINGLE = 0
+    UCAC4_DOUBLE_STAR_FLAG_COMP1 = 1
+    UCAC4_DOUBLE_STAR_FLAG_COMP2 = 2
+    UCAC4_DOUBLE_STAR_FLAG_BLENDED = 3
+
+    UCAC4_DOUBLE_STAR_FLAG_STRINGS = ['SINGLE', 'COMP1', 'COMP2', 'BLENDED']
+
+    UCAC4_DOUBLE_STAR_TYPE_NONE = 0
+    UCAC4_DOUBLE_STAR_TYPE_1PEAK = 1
+    UCAC4_DOUBLE_STAR_TYPE_2PEAK = 2
+    UCAC4_DOUBLE_STAR_TYPE_SECONDARY_PEAK = 3
+    UCAC4_DOUBLE_STAR_TYPE_1PEAK_FIT = 4
+    UCAC4_DOUBLE_STAR_TYPE_2PEAK_FIT = 5
+    UCAC4_DOUBLE_STAR_TYPE_SECONDARY_PEAK_FIT = 6
+
+    UCAC4_DOUBLE_STAR_TYPE_STRINGS = ['NONE', '1PEAK', '2PEAK', 'SECONDARY_PEAK',
+                                      '1PEAK_FIT', '2PEAK_FIT',
+                                      'SECONDARY_PEAK_FIT']
+
+    def __init__(self) -> None:
         # Initialize the standard fields
-        Star.__init__(self)
+        super().__init__()
 
         # Initialize the UCAC4-specific fields
-        self.vmag_model: Optional[str] = None
+        self.vmag_model: Optional[float] = None
+        """Fit model magnitude"""
+
         self.obj_type: Optional[int] = None
+        """The object type used to identify possible problems with a star or
+           the source of data:
+           0 = good, clean star (from MPOS), no known problem;
+           1 = largest flag of any image = near overexposed star (from MPOS);
+           2 = largest flag of any image = possible streak object (from MPOS);
+           3 = high proper motion (HPM) star, match with external PM file (MPOS);
+           4 = actually use external HPM data instead of UCAC4 observ.data
+           (accuracy of positions varies between catalogs);
+           5 = poor proper motion solution, report only CCD epoch position;
+           6 = substitute poor astrometric results by FK6/Hip/Tycho-2 data;
+           7 = added supplement star (no CCD data) from FK6/Hip/Tycho-2 data,
+           and 2 stars added from high proper motion surveys;
+           8 = high proper motion solution in UCAC4, star not matched with PPMXL;
+           9 = high proper motion solution in UCAC4, discrepant PM to PPMXL
+           (see discussion of flags 8,9 in redcution section 2e above)
+        """
+
         self.double_star_flag: Optional[bool] = None
+        """Double star flag overall classification:
+           0 = single star;
+           1 = component #1 of "good" double star;
+           2 = component #2 of "good" double star;
+           3 = blended image
+        """
+
         self.double_star_type: Optional[int] = None
+        """Double star type:
+           0 = no double star, not sufficient #pixels or elongation
+           to even call double star fit subroutine;
+           1 = elongated image but no more than 1 peak detected;
+           2 = 2 separate peaks detected -> try double star fit;
+           3 = secondary peak found on each side of primary;
+           4 = case 1 after successful double fit (small separ. blended image);
+           5 = case 2 after successful double fit (most likely real double);
+           6 = case 3 after successful double fit (brighter secondary picked)
+        """
+
         self.galaxy_match: Optional[float] = None
+        """LEDA galaxy match flag:
+           This flag is either 0 (no match) or contains the log10 of
+           the apparent total diameter for I-band (object size) information
+           (unit = 0.1 arcmin) copied from the LEDA catalog (galaxies).
+           A size value of less than 1 has been rounded up to 1.
+        """
+
         self.extended_source: Optional[bool] = None
+        """2MASS extended source flag:
+           This flag is either 0 (no match) or contains the length of
+           the semi-major axis of the fiducial ellipse at the K-band
+           (object size) information copied from the 2MASS extended source
+           catalog.
+        """
+
         self.num_img_total: Optional[int] = None
+        """Total # of CCD images of this star"""
+
         self.num_img_used: Optional[int] = None
+        """# of CCD images used for this star.
+           A zero for the number of used images indicates that all images
+           have some "problem" (such as overexposure). In that case an unweighted
+           mean over all available images (na) is taken to derive the mean
+           position, while normally a weighted mean was calculated based on
+           the "good" images, excluding possible problem images (nu <= na).
+        """
+
         self.num_cat_pm: Optional[int] = None
+        """# catalogs (epochs) used for proper motions"""
+
         self.ra_mean_epoch: Optional[float] = None
+        """Central epoch for mean RA, minus 1900"""
+
         self.dec_mean_epoch: Optional[int] = None
+        """Central epoch for mean Dec, minus 1900"""
+
         self.cat_match: Optional[list[int]] = None
+        """A list of ints indicating which catalogs this star has matched against.
+           There are 10 entries: Yale SPM, FK6-Hipparcos-Tycho, AC2000, AGK2 Bonn,
+           AKG2 Hamburg, Zone Astrog., Black Birch, Lick Astrog., NPM Lick, and
+           SPM YSJ1. See the comments in this file for more details.
+        """
+
         self.apass_mag_b: Optional[float] = None
+        """B magnitude from APASS"""
+
         self.apass_mag_v: Optional[float] = None
+        """V magnitude from APASS"""
+
         self.apass_mag_g: Optional[float] = None
+        """G magnitude from APASS"""
+
         self.apass_mag_r: Optional[float] = None
+        """R magnitude from APASS"""
+
         self.apass_mag_i: Optional[float] = None
+        """I magnitude from APASS"""
+
         self.apass_mag_b_sigma: Optional[float] = None
+        """Uncertainty of B magnitude from APASS"""
+
         self.apass_mag_v_sigma: Optional[float] = None
+        """Uncertainty of V magnitude from APASS"""
+
         self.apass_mag_g_sigma: Optional[float] = None
+        """Uncertainty of G magnitude from APASS"""
+
         self.apass_mag_r_sigma: Optional[float] = None
+        """Uncertainty of R magnitude from APASS"""
+
         self.apass_mag_i_sigma: Optional[float] = None
+        """Uncertainty of I magnitude from APASS"""
+
         self.johnson_mag_b: Optional[float] = None
+        """The Johnson B magnitude derived from APASS measurements."""
+
         self.johnson_mag_v: Optional[float] = None
+        """The Johnson V magnitude derived from APASS measurements."""
+
         self.id_str: Optional[str] = None
+        """A unique name indicating the position in the UCAC4 catalog"""
+
         self.id_str_ucac2: Optional[str] = None
-        self.spectral_class: Optional[str] = None
-        self.temperature: Optional[float] = None
+        """A unique name indicating the position in the UCAC2 catalog"""
 
     def __str__(self) -> str:
 
@@ -114,7 +211,7 @@ class UCAC4Star(Star):
         if self.obj_type is None:
             ret += 'None'
         else:
-            ret += UCAC4_OBJ_TYPE_STRINGS[self.obj_type]
+            ret += UCAC4Star.UCAC4_OBJ_TYPE_STRINGS[self.obj_type]
         ret += ' | '
 
         if self.vmag_model is None:
@@ -123,24 +220,19 @@ class UCAC4Star(Star):
             ret += f'APER VMAG {self.vmag_model:6.3f}'
         ret += ' | '
 
-        if self.temperature is None:
-            ret += 'TEMP None'
-        else:
-            ret += f'TEMP {self.temperature:5d}'
-        ret += f' | SCLASS {self.spectral_class:2s}'
         ret += '\n'
 
         ret += 'DBL STAR FLAG='
         if self.double_star_flag is None:
             ret += 'None'
         else:
-            ret += UCAC4_DOUBLE_STAR_FLAG_STRINGS[self.double_star_flag]
+            ret += UCAC4Star.UCAC4_DOUBLE_STAR_FLAG_STRINGS[self.double_star_flag]
 
         ret += ' TYPE='
         if self.double_star_type is None:
             ret += 'None'
         else:
-            ret += UCAC4_DOUBLE_STAR_TYPE_STRINGS[self.double_star_type]
+            ret += UCAC4Star.UCAC4_DOUBLE_STAR_TYPE_STRINGS[self.double_star_type]
 
         ret += ' | GALAXY '
         if self.galaxy_match is None:
@@ -278,8 +370,33 @@ assert struct.calcsize(UCAC4_FMT_RA) == UCAC4_RECORD_SIZE_RA
 
 
 class UCAC4StarCatalog(StarCatalog):
+    """A UCAC4 star catalog.
+
+    This class adds the following options to `find_stars`::
+
+        require_clean (bool, default True): Return only "clean" stars. Skip stars
+            that are streaks or have high proper motion that is not matched
+            or discrepant.
+        allow_double (bool, default True): If True, include double stars.
+        allow_galaxy (bool, default False): If True, include galaxies.
+        require_pm (bool, default True): If True, only return stars with measured proper
+            motion.
+        return_everything (bool, default False): If True, override the above options to
+            return all stars and galaxies.
+        optimize_ra (bool, default True): Optimize searching of RA through zone files.
+            Only useful for internal development.
+    """
+
     def __init__(self,
                  dir: Optional[str | Path | FCPath] = None) -> None:
+        """Create a UCAC4StarCatalog.
+
+        Parameters:
+            dir: The path to the star catalog directory (may be a URL). Within
+                this directory should be the directory ``u4b``.
+        """
+
+        super().__init__()
 
         if dir is None:
             self._dirname = FCPath(os.environ['UCAC4_PATH'])
@@ -300,7 +417,7 @@ class UCAC4StarCatalog(StarCatalog):
         # We do this here instead of as specific arguments because it works better
         # with mypy
         require_clean: bool = kwargs.pop('require_clean', True)
-        allow_double: bool = kwargs.pop('allow_double', False)
+        allow_double: bool = kwargs.pop('allow_double', True)
         allow_galaxy: bool = kwargs.pop('allow_galaxy', False)
         require_pm: bool = kwargs.pop('require_pm', True)
         return_everything: bool = kwargs.pop('return_everything', False)
@@ -461,12 +578,12 @@ class UCAC4StarCatalog(StarCatalog):
 #         and 2 stars added from high proper motion surveys
 #    8 = high proper motion solution in UCAC4, star not matched with PPMXL
 #    9 = high proper motion solution in UCAC4, discrepant PM to PPMXL
-#     (see discussion of flags 8,9 in redcution section 2e above)
+#     (see discussion of flags 8,9 in reduction section 2e above)
             star.obj_type = parsed[5]
             if (require_clean and
-                (star.obj_type in (UCAC4_OBJ_TYPE_STREAK,
-                                   UCAC4_OBJ_TYPE_HPM_NOT_MATCHED,
-                                   UCAC4_OBJ_TYPE_HPM_DISCREPANT))):
+                (star.obj_type in (UCAC4Star.UCAC4_OBJ_TYPE_STREAK,
+                                   UCAC4Star.UCAC4_OBJ_TYPE_HPM_NOT_MATCHED,
+                                   UCAC4Star.UCAC4_OBJ_TYPE_HPM_DISCREPANT))):
                 # Use with extreme caution
                 if self.debug_level:
                     print('ID', parsed[42], 'SKIPPED NOT CLEAN', star.obj_type)
@@ -966,11 +1083,11 @@ class UCAC4StarCatalog(StarCatalog):
 
             if (star.johnson_mag_b is not None and
                     star.johnson_mag_v is not None):
-                star.spectral_class = self.sclass_from_bv(star.johnson_mag_b,
+                star.spectral_class = Star.sclass_from_bv(star.johnson_mag_b,
                                                           star.johnson_mag_v)
 
             if star.spectral_class is not None:
-                star.temperature = self.temperature_from_sclass(star.
+                star.temperature = Star.temperature_from_sclass(star.
                                                                 spectral_class)
 
             if self.debug_level:

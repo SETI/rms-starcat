@@ -11,7 +11,7 @@ class Test_SpiceStarCatalog(unittest.TestCase):
 
     def runTest(self) -> None:
         cat = SpiceStarCatalog('hipparcos',
-                               dir=FCPath('gs://rms-node-star-catalogs/SPICE',
+                               dir=FCPath('gs://rms-node-star-catalogs/SPICE/Stars',
                                           anonymous=True))
 
         num_all = cat.count_stars()
