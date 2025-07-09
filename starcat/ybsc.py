@@ -367,7 +367,7 @@ class YBSCStarCatalog(StarCatalog):
 
         Parameters:
             dir: The path to the star catalog directory (may be a URL). Within
-                this directory should be the file ``catalog``.
+                 this directory should be the file ``catalog``.
         """
 
         super().__init__()
