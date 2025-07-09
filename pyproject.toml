@@ -37,6 +37,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/SETI/rms-starcat"
+Documentation = "https://rms-starcat.readthedocs.io/en/latest"
 Repository = "https://github.com/SETI/rms-starcat"
 Source = "https://github.com/SETI/rms-starcat"
 Issues = "https://github.com/SETI/rms-starcat/issues"
