@@ -7,7 +7,7 @@ name = "rms-starcat"
 dynamic = ["version"]
 description = "Star catalog database"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
   "cspyce",
   "numpy"
