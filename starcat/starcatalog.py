@@ -2,11 +2,10 @@
 # starcat/starcatalog.py
 ################################################################################
 
-from __future__ import annotations
-
+from collections.abc import Iterator
 import inspect
 import numpy as np
-from typing import Any, Iterator, Optional, no_type_check
+from typing import Any, Optional, no_type_check
 
 
 AS_TO_DEG = 1 / 3600.
@@ -308,7 +307,7 @@ class Star:
     # __getattr__ method.
     @no_type_check
     def __getattr__(self, name: str) -> Any:
-        return super().__getattr__(name)
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary containing all star attributes."""
