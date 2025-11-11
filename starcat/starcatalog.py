@@ -2,6 +2,8 @@
 # starcat/starcatalog.py
 ################################################################################
 
+from future import annotations
+
 from collections.abc import Iterator
 import inspect
 import numpy as np
