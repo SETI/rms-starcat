@@ -4,9 +4,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 import inspect
 import numpy as np
-from typing import Any, Iterator, Optional
+from typing import Any, Optional, no_type_check
 
 
 AS_TO_DEG = 1 / 3600.
@@ -302,6 +303,13 @@ class Star:
         ret += f' | SCLASS {self.spectral_class:s}'
 
         return ret
+
+    # This is a stupid thing to do, but it's necessary to avoid mypy from complaining
+    # about missing attributes. mypy ignores attributes for classes that have a
+    # __getattr__ method.
+    @no_type_check
+    def __getattr__(self, name: str) -> Any:
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary containing all star attributes."""
