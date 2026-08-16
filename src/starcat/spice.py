@@ -41,9 +41,11 @@ class SpiceStarCatalog(StarCatalog):
     """A NAIF SPICE type 1 star catalog.
 
     The catalog is a single ``.bdb`` kernel, which is loaded when this object is created
-    and stays loaded for the life of the process. `find_stars` accepts no options beyond
-    the ones common to all catalogs, and the resulting :class:`SpiceStar` objects carry
-    only position, magnitude, and spectral class; SPICE catalogs record no proper motion.
+    and stays loaded for the life of the process. `find_stars` and `count_stars` accept no
+    options beyond the ones common to all catalogs, and the resulting :class:`SpiceStar`
+    objects carry a catalog number, a position and its uncertainty, a magnitude, a spectral
+    class, and a temperature derived from that class. SPICE catalogs record no proper
+    motion.
     """
 
     def __init__(self,

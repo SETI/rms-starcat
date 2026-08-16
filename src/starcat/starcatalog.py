@@ -9,8 +9,9 @@ the conversions between spectral class, B-V color, and surface temperature.
 :class:`StarCatalog` defines the search interface that every catalog implements, and
 takes care of searches that wrap across RA 0 or the celestial poles.
 
-All angles used by this package are in radians, and all proper motions are in radians
-per second.
+The right ascension, declination, and proper motion attributes that every catalog shares
+are in radians and radians per second. Some catalog-specific attributes use other units,
+which their own documentation gives.
 """
 
 from __future__ import annotations
@@ -254,9 +255,10 @@ class Star:
     def __str__(self) -> str:
         """Return a multi-line, human-readable summary of the star.
 
-        Attributes that are not filled in are shown as ``None`` or ``N/A``. Angles are
-        shown in degrees as well as in sexagesimal notation, and proper motions in
-        milliarcseconds per year.
+        Position, magnitude, and proper motion are left out entirely when they are not
+        filled in, while the temperature is shown as ``N/A`` and the remaining attributes
+        as ``None``. Angles are shown in degrees as well as in sexagesimal notation, and
+        proper motions in milliarcseconds per year.
         """
 
         ret = f'UNIQUE ID {self.unique_number}'

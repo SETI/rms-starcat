@@ -67,10 +67,13 @@ five-band photometry from APASS.
 
 The data is distributed as 900 binary zone files in a ``u4b`` subdirectory, each covering
 0.2 degrees of declination and sorted by increasing right ascension. Only the zones that
-overlap the declination range of a search are opened, and within a zone the read stops as
-soon as the right ascension passes ``ra_max``. **A narrow declination range is therefore
-much cheaper than a narrow right ascension range**: a search one degree tall touches five
-zone files no matter how wide it is.
+overlap the declination range of a search are opened, so the number of files is set by the
+height of the box alone: one degree of declination spans five or six zones, depending on
+where its edges fall, however wide the box is in right ascension. Within a zone,
+``optimize_ra`` binary-searches for the first record at or after ``ra_min`` and the scan
+stops as soon as the right ascension passes ``ra_max``, so a narrow right ascension range
+reads few records. **A tight declination range is what saves whole files; a tight right
+ascension range is what saves records within them.**
 
 :class:`~starcat.UCAC4StarCatalog` adds these options:
 

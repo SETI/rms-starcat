@@ -220,7 +220,8 @@ class UCAC4Star(Star):
         """Return a multi-line, human-readable summary of the star.
 
         The summary of :class:`~starcat.Star` is followed by the UCAC4-specific
-        attributes. Attributes that are not filled in are shown as ``None``.
+        attributes. Attributes that are not filled in are shown as ``None``, or as
+        ``NONE`` for the galaxy and extended source flags.
         """
 
         ret = Star.__str__(self)
@@ -391,7 +392,7 @@ assert struct.calcsize(UCAC4_FMT_RA) == UCAC4_RECORD_SIZE_RA
 class UCAC4StarCatalog(StarCatalog):
     """A UCAC4 star catalog.
 
-    This class adds the following options to `find_stars`::
+    This class adds the following options to `find_stars` and `count_stars`::
 
         require_clean (bool, default True): Return only "clean" stars. Skip stars
             that are streaks or have high proper motion that is not matched

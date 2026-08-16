@@ -190,7 +190,10 @@ class YBSCStar(Star):
         """Return a multi-line, human-readable summary of the star.
 
         The summary of :class:`~starcat.Star` is followed by the YBSC-specific
-        attributes. Attributes that are not filled in are shown as ``None`` or ``N/A``.
+        attributes, most of which are shown as ``None`` or ``N/A`` when they are not
+        filled in. A star with no ``parallax_type`` is reported as having a trigonometric
+        parallax, and a star built by hand rather than read from the catalog must have
+        ``ir_source`` set, because it is formatted as an integer.
         """
 
         ret = Star.__str__(self) + '\n'
@@ -382,7 +385,7 @@ class YBSCStarCatalog(StarCatalog):
     over the roughly 9100 stars held in memory. Records with no visual magnitude, which
     are the entries that have been removed from the catalog, are discarded while reading.
 
-    This class adds the following option to `find_stars`::
+    This class adds the following option to `find_stars` and `count_stars`::
 
         allow_double (bool, default False): If True, include stars carrying a double or
             multiple star code. Note that the default excludes about 1600 stars.

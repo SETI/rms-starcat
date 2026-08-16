@@ -101,9 +101,11 @@ spectral class and temperature.
 Results arrive lazily
 =====================
 
-:meth:`~starcat.StarCatalog.find_stars` is a generator. Nothing is read until
-you iterate, and a loop that stops early stops the reading. Iterate directly rather than
-building a list when the box is large:
+:meth:`~starcat.StarCatalog.find_stars` is a generator, so the search itself does no work
+until you iterate, and a loop that stops early stops the reading. That is what saves time
+with UCAC4, which reads its zone files as you go; YBSC and SPICE have already read their
+data by the time the catalog object exists. Iterate directly rather than building a list
+when the box is large:
 
 .. code-block:: python
 
@@ -114,10 +116,11 @@ building a list when the box is large:
 Watching a search
 =================
 
-Setting ``debug_level`` on the catalog object prints a line for each star as it is kept
-or rejected, along with the reason. UCAC4 also has a level 2, which additionally reports
-the stars rejected on position and magnitude -- verbose, but the fastest way to find out
-why a star you expected is missing.
+Setting ``debug_level`` on the catalog object prints what a search is doing, which is the
+fastest way to find out why a star you expected is missing. Exactly what appears is
+catalog-specific: UCAC4 reports every star it keeps and every one it rejects along with
+the reason, and at level 2 also those rejected on position and magnitude; SPICE reports
+the stars it keeps and those it drops on magnitude; YBSC prints only the stars it keeps.
 
 .. code-block:: python
 
