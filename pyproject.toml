@@ -10,7 +10,8 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
   "cspyce",
-  "numpy"
+  "numpy",
+  "rms-filecache"
 ]
 license = {text = "Apache-2.0"}
 maintainers = [

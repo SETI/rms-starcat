@@ -424,7 +424,11 @@ class UCAC4StarCatalog(StarCatalog):
         optimize_ra: bool = kwargs.pop('optimize_ra', True)
 
         start_znum = int(max(np.floor((np.degrees(dec_min)+90)*5)+1, 1))
-        end_znum = int(min(np.floor((np.degrees(dec_max)+90-1e-15)*5)+1, 900))
+        # The 1e-9 (2e-10 degrees) keeps a dec_max that falls exactly on a zone
+        # boundary from opening the zone above it, which can contain no stars
+        # within the search box. It has to be large enough to survive the
+        # round-trip conversion of the boundary to radians and back.
+        end_znum = int(min(np.floor((np.degrees(dec_max)+90)*5-1e-9)+1, 900))
 
         for znum in range(start_znum, end_znum+1):
             fn = self._zone_filename(znum)
@@ -716,6 +720,7 @@ class UCAC4StarCatalog(StarCatalog):
                 star.pm_rac_sigma = None
                 if star.pm_rac == 0:
                     star.pm_rac = None
+                    star.pm_ra = None
             if star.pm_rac_sigma is None:
                 star.pm_ra_sigma = None
             else:
@@ -1126,13 +1131,11 @@ class UCAC4StarCatalog(StarCatalog):
             midval = parsed[0] * MAS_TO_RAD
             if midval < ra_min:
                 lo = mid+1
-            elif midval > ra_min:
-                hi = mid-1
             else:
-                # Exact match!
-                fp.seek(mid*UCAC4_RECORD_SIZE, os.SEEK_SET)
-                return int(mid // UCAC4_RECORD_SIZE)
+                # An exact match is not good enough because more than one record
+                # can have the same RA; keep looking for the first of them
+                hi = mid-1
 
-        # At this point lo is the best we can do
+        # At this point lo is the first record >= ra_min
         fp.seek(lo*UCAC4_RECORD_SIZE, os.SEEK_SET)
-        return int(lo // UCAC4_RECORD_SIZE)
+        return lo
