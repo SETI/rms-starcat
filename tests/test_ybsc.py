@@ -346,6 +346,21 @@ def test_find_stars_by_vmag(tmp_path: Path) -> None:
     assert cat.count_stars(vmag_min=3., vmag_max=7.) == 1
 
 
+def test_find_stars_by_vmag_of_zero(tmp_path: Path) -> None:
+    # A limit of zero is a real limit, not the absence of one; the bright stars of
+    # this catalog straddle magnitude zero
+    stars = [ybsc_record(hr=str(num+1), **ybsc_ra(1, 0, 0.),
+                         **ybsc_dec('+', 10, 0, 0), glon='0.00', glat='0.00',
+                         vmag=f'{vmag:5.2f}', sptype='G0',
+                         pm_ra='0.000', pm_dec='0.000')
+             for num, vmag in enumerate([-1., 1.])]
+    cat = make_catalog(tmp_path, stars)
+
+    assert cat.count_stars() == 2
+    assert cat.count_stars(vmag_min=0.) == 1
+    assert cat.count_stars(vmag_max=0.) == 1
+
+
 def test_allow_double(tmp_path: Path) -> None:
     single = ybsc_record(hr='1', **ybsc_ra(1, 0, 0.),
                          **ybsc_dec('+', 10, 0, 0), glon='0.00', glat='0.00',

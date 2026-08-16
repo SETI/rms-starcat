@@ -2,7 +2,16 @@
 # starcat/ucac4.py
 ################################################################################
 
-# Zacharias, N. et al. 2013, The Astronomical Journal, 145, 44
+"""Support for the UCAC4 star catalog.
+
+UCAC4 holds about 113 million stars and is complete from the brightest stars to about
+magnitude R=16. It is distributed as 900 binary zone files, each covering 0.2 degrees of
+declination and sorted by increasing right ascension; only the zone files overlapping a
+search are read.
+
+Reference:
+    Zacharias, N. et al. 2013, The Astronomical Journal, 145, 44
+"""
 
 from __future__ import annotations
 
@@ -71,6 +80,11 @@ class UCAC4Star(Star):
         'SECONDARY_PEAK_FIT']
 
     def __init__(self) -> None:
+        """Constructor for UCAC4Star.
+
+        See :class:`~starcat.Star` for the attributes common to all catalogs.
+        """
+
         # Initialize the standard fields
         super().__init__()
 
@@ -96,7 +110,7 @@ class UCAC4Star(Star):
            (see discussion of flags 8,9 in redcution section 2e above)
         """
 
-        self.double_star_flag: bool | None = None
+        self.double_star_flag: int | None = None
         """Double star flag overall classification:
            0 = single star;
            1 = component #1 of "good" double star;
@@ -124,7 +138,7 @@ class UCAC4Star(Star):
            A size value of less than 1 has been rounded up to 1.
         """
 
-        self.extended_source: bool | None = None
+        self.extended_source: int | None = None
         """2MASS extended source flag:
            This flag is either 0 (no match) or contains the length of
            the semi-major axis of the fiducial ellipse at the K-band
@@ -150,7 +164,7 @@ class UCAC4Star(Star):
         self.ra_mean_epoch: float | None = None
         """Central epoch for mean RA, minus 1900"""
 
-        self.dec_mean_epoch: int | None = None
+        self.dec_mean_epoch: float | None = None
         """Central epoch for mean Dec, minus 1900"""
 
         self.cat_match: list[int] | None = None
@@ -203,6 +217,11 @@ class UCAC4Star(Star):
         """A unique name indicating the position in the UCAC2 catalog"""
 
     def __str__(self) -> str:
+        """Return a multi-line, human-readable summary of the star.
+
+        The summary of :class:`~starcat.Star` is followed by the UCAC4-specific
+        attributes. Attributes that are not filled in are shown as ``None``.
+        """
 
         ret = Star.__str__(self)
 

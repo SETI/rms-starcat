@@ -11,6 +11,7 @@ Welcome to the Documentation for rms-starcat!
    :maxdepth: 2
    :caption: Contents:
 
+   user_guide/user_guide
    module
    contributing
    code_of_conduct

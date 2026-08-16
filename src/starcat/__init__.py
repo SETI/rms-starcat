@@ -2,6 +2,21 @@
 # starcat/__init__.py
 ################################################################################
 
+"""Read and search star catalogs.
+
+This package provides a common interface to several star catalogs. Every catalog is
+represented by a subclass of :class:`~starcat.StarCatalog` that yields stars as a
+subclass of :class:`~starcat.Star`:
+
+- :class:`~starcat.SpiceStarCatalog` for NAIF SPICE type 1 star catalogs, such as
+  Hipparcos, PPM, and Tycho-2.
+- :class:`~starcat.YBSCStarCatalog` for the Yale Bright Star Catalog.
+- :class:`~starcat.UCAC4StarCatalog` for UCAC4.
+
+The catalog data itself is not part of this package; see the user guide for where each
+catalog looks for its files.
+"""
+
 from starcat.spice import SpiceStar, SpiceStarCatalog
 from starcat.starcatalog import (
     SCLASS_TO_B_MINUS_V,

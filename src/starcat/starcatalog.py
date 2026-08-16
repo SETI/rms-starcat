@@ -2,6 +2,17 @@
 # starcat/starcatalog.py
 ################################################################################
 
+"""The catalog-independent base classes.
+
+:class:`Star` holds the attributes that most star catalogs have in common and provides
+the conversions between spectral class, B-V color, and surface temperature.
+:class:`StarCatalog` defines the search interface that every catalog implements, and
+takes care of searches that wrap across RA 0 or the celestial poles.
+
+All angles used by this package are in radians, and all proper motions are in radians
+per second.
+"""
+
 from __future__ import annotations
 
 import inspect
@@ -241,6 +252,12 @@ class Star:
         """Star temperature (usually derived from spectral class)"""
 
     def __str__(self) -> str:
+        """Return a multi-line, human-readable summary of the star.
+
+        Attributes that are not filled in are shown as ``None`` or ``N/A``. Angles are
+        shown in degrees as well as in sexagesimal notation, and proper motions in
+        milliarcseconds per year.
+        """
 
         ret = f'UNIQUE ID {self.unique_number}'
 
@@ -420,11 +437,39 @@ class Star:
 
 
 class StarCatalog:
+    """The base class for all star catalogs.
+
+    A subclass implements ``_find_stars``, which searches a single RA/DEC box; this class
+    turns that into :meth:`find_stars`, which additionally accepts boxes that wrap across
+    RA 0 or across a celestial pole, and into :meth:`count_stars`.
+
+    Subclasses may accept additional keyword arguments to :meth:`find_stars` and
+    :meth:`count_stars`; see the documentation of each catalog for what it supports.
+
+    Attributes:
+        debug_level: If greater than zero, information about the stars that are returned
+            and skipped is printed during a search. Higher levels are more verbose. The
+            meaning of each level is catalog-specific.
+    """
+
     def __init__(self) -> None:
+        """Constructor for StarCatalog."""
+
         self.debug_level = 0
 
     def count_stars(self, **kwargs: Any) -> int:
-        """Count the stars that match the given search criteria."""
+        """Count the stars that match the given search criteria.
+
+        This is more efficient than taking the length of the result of
+        :meth:`find_stars` because the stars are not fully populated.
+
+        Parameters:
+            kwargs: The same search criteria accepted by :meth:`find_stars`, except for
+                ``full_result``, which is always False.
+
+        Returns:
+            The number of stars that meet the given constraints.
+        """
 
         count = 0
         for _ in self.find_stars(full_result=False, **kwargs):
@@ -442,19 +487,31 @@ class StarCatalog:
                    **kwargs: Any) -> Iterator[Star]:
         """Yield the stars that match the given search criteria.
 
+        The search covers the box ``ra_min`` to ``ra_max`` and ``dec_min`` to ``dec_max``.
+        All four limits are clipped to the valid range. If ``ra_min`` is greater than
+        ``ra_max`` the box wraps across RA 0, and if ``dec_min`` is greater than
+        ``dec_max`` it wraps across a celestial pole; either way the search is split into
+        the two (or four) boxes that do not wrap, and the stars of each are yielded in
+        turn. Stars are therefore not in RA or DEC order across such a seam.
+
         Parameters:
-            ra_min: The minimum RA.
-            ra_max: The maximum RA.
-            dec_min: The minimum DEC.
-            dec_max: The maximum DEC.
-            vmag_min: The minimum visual magnitude.
-            vmag_max: The maximum visual magnitude.
+            ra_min: The minimum RA (radians).
+            ra_max: The maximum RA (radians).
+            dec_min: The minimum DEC (radians).
+            dec_max: The maximum DEC (radians).
+            vmag_min: The minimum visual magnitude, or None for no limit.
+            vmag_max: The maximum visual magnitude, or None for no limit. Whether a star
+                with no known magnitude passes a magnitude limit depends on the catalog;
+                UCAC4 drops such stars.
             full_result: If True, fill in all available fields of the resulting
                 :class:`Star`. If False, some fields will not be filled in to save
                 time. This is most useful when counting stars.
+            kwargs: Additional criteria supported by the particular catalog.
 
         Yields:
-            The :class:`Star` objects that meet the given constraints.
+            The :class:`Star` objects that meet the given constraints. A star that falls
+            exactly on a boundary of the box may or may not be included, depending on the
+            catalog.
         """
 
         ra_min = np.clip(ra_min, 0., TWOPI)
