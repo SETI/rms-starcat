@@ -28,7 +28,7 @@ import cspyce
 # records sorted by increasing RA. See readme_u4.txt in the UCAC4 distribution.
 ################################################################################
 
-UCAC4_FMT = '=iihhbbbbbbbbhhhhbbihhhbbbbbbhhhhhbbbbbbibbihi'
+UCAC4_FMT = '<iihhbbbbbbbbhhhhbbihhhbbbbbbhhhhhbbbbbbibbihi'
 UCAC4_RECORD_SIZE = 78
 
 # The fields of a UCAC4 record, in the order they appear in UCAC4_FMT.

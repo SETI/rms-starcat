@@ -360,11 +360,12 @@ class UCAC4Star(Star):
 #52 73-74 zn2    I*2            zone number of UCAC2 (0 = no match)     (21)
 #53 75-78 rn2    I*4            running record number along UCAC2 zone  (21)
 
-UCAC4_FMT = '=iihhbbbbbbbbhhhhbbihhhbbbbbbhhhhhbbbbbbibbihi'
+# The zone files are little-endian regardless of the host
+UCAC4_FMT = '<iihhbbbbbbbbhhhhbbihhhbbbbbbhhhhhbbbbbbibbihi'
 UCAC4_RECORD_SIZE = 78
 assert struct.calcsize(UCAC4_FMT) == UCAC4_RECORD_SIZE
 
-UCAC4_FMT_RA = '=i'
+UCAC4_FMT_RA = '<i'
 UCAC4_RECORD_SIZE_RA = 4
 assert struct.calcsize(UCAC4_FMT_RA) == UCAC4_RECORD_SIZE_RA
 
