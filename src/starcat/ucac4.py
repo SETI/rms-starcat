@@ -7,19 +7,15 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import struct
-from typing import Any, Iterator, Optional, cast
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any, ClassVar, cast
 
-from filecache import FCPath
 import numpy as np
+from filecache import FCPath
 
-from .starcatalog import (HALFPI,
-                          MAS_TO_RAD,
-                          YEAR_TO_SEC,
-                          Star,
-                          StarCatalog
-                          )
+from .starcatalog import HALFPI, MAS_TO_RAD, YEAR_TO_SEC, Star, StarCatalog
 
 
 class UCAC4Star(Star):
@@ -38,9 +34,10 @@ class UCAC4Star(Star):
     UCAC4_OBJ_TYPE_HPM_NOT_MATCHED = 8
     UCAC4_OBJ_TYPE_HPM_DISCREPANT = 9
 
-    UCAC4_OBJ_TYPE_STRINGS = ['CLEAN', 'NEAR_OVEREXPOSED', 'STREAK', 'HPM',
-                              'EXT_HPM', 'POOR_PM', 'SUBST_ASTROMETRY', 'SUPPL',
-                              'HPM_NOT_MATCHED', 'HPM_DISCREPANT']
+    UCAC4_OBJ_TYPE_STRINGS: ClassVar[list[str]] = [
+        'CLEAN', 'NEAR_OVEREXPOSED', 'STREAK', 'HPM',
+        'EXT_HPM', 'POOR_PM', 'SUBST_ASTROMETRY', 'SUPPL',
+        'HPM_NOT_MATCHED', 'HPM_DISCREPANT']
 
     #CATMATCH_TYCHO = 0
     #CATMATCH_AC2000 = 1
@@ -57,7 +54,8 @@ class UCAC4Star(Star):
     UCAC4_DOUBLE_STAR_FLAG_COMP2 = 2
     UCAC4_DOUBLE_STAR_FLAG_BLENDED = 3
 
-    UCAC4_DOUBLE_STAR_FLAG_STRINGS = ['SINGLE', 'COMP1', 'COMP2', 'BLENDED']
+    UCAC4_DOUBLE_STAR_FLAG_STRINGS: ClassVar[list[str]] = [
+        'SINGLE', 'COMP1', 'COMP2', 'BLENDED']
 
     UCAC4_DOUBLE_STAR_TYPE_NONE = 0
     UCAC4_DOUBLE_STAR_TYPE_1PEAK = 1
@@ -67,19 +65,20 @@ class UCAC4Star(Star):
     UCAC4_DOUBLE_STAR_TYPE_2PEAK_FIT = 5
     UCAC4_DOUBLE_STAR_TYPE_SECONDARY_PEAK_FIT = 6
 
-    UCAC4_DOUBLE_STAR_TYPE_STRINGS = ['NONE', '1PEAK', '2PEAK', 'SECONDARY_PEAK',
-                                      '1PEAK_FIT', '2PEAK_FIT',
-                                      'SECONDARY_PEAK_FIT']
+    UCAC4_DOUBLE_STAR_TYPE_STRINGS: ClassVar[list[str]] = [
+        'NONE', '1PEAK', '2PEAK', 'SECONDARY_PEAK',
+        '1PEAK_FIT', '2PEAK_FIT',
+        'SECONDARY_PEAK_FIT']
 
     def __init__(self) -> None:
         # Initialize the standard fields
         super().__init__()
 
         # Initialize the UCAC4-specific fields
-        self.vmag_model: Optional[float] = None
+        self.vmag_model: float | None = None
         """Fit model magnitude"""
 
-        self.obj_type: Optional[int] = None
+        self.obj_type: int | None = None
         """The object type used to identify possible problems with a star or
            the source of data:
            0 = good, clean star (from MPOS), no known problem;
@@ -97,7 +96,7 @@ class UCAC4Star(Star):
            (see discussion of flags 8,9 in redcution section 2e above)
         """
 
-        self.double_star_flag: Optional[bool] = None
+        self.double_star_flag: bool | None = None
         """Double star flag overall classification:
            0 = single star;
            1 = component #1 of "good" double star;
@@ -105,7 +104,7 @@ class UCAC4Star(Star):
            3 = blended image
         """
 
-        self.double_star_type: Optional[int] = None
+        self.double_star_type: int | None = None
         """Double star type:
            0 = no double star, not sufficient #pixels or elongation
            to even call double star fit subroutine;
@@ -117,7 +116,7 @@ class UCAC4Star(Star):
            6 = case 3 after successful double fit (brighter secondary picked)
         """
 
-        self.galaxy_match: Optional[float] = None
+        self.galaxy_match: float | None = None
         """LEDA galaxy match flag:
            This flag is either 0 (no match) or contains the log10 of
            the apparent total diameter for I-band (object size) information
@@ -125,7 +124,7 @@ class UCAC4Star(Star):
            A size value of less than 1 has been rounded up to 1.
         """
 
-        self.extended_source: Optional[bool] = None
+        self.extended_source: bool | None = None
         """2MASS extended source flag:
            This flag is either 0 (no match) or contains the length of
            the semi-major axis of the fiducial ellipse at the K-band
@@ -133,10 +132,10 @@ class UCAC4Star(Star):
            catalog.
         """
 
-        self.num_img_total: Optional[int] = None
+        self.num_img_total: int | None = None
         """Total # of CCD images of this star"""
 
-        self.num_img_used: Optional[int] = None
+        self.num_img_used: int | None = None
         """# of CCD images used for this star.
            A zero for the number of used images indicates that all images
            have some "problem" (such as overexposure). In that case an unweighted
@@ -145,62 +144,62 @@ class UCAC4Star(Star):
            the "good" images, excluding possible problem images (nu <= na).
         """
 
-        self.num_cat_pm: Optional[int] = None
+        self.num_cat_pm: int | None = None
         """# catalogs (epochs) used for proper motions"""
 
-        self.ra_mean_epoch: Optional[float] = None
+        self.ra_mean_epoch: float | None = None
         """Central epoch for mean RA, minus 1900"""
 
-        self.dec_mean_epoch: Optional[int] = None
+        self.dec_mean_epoch: int | None = None
         """Central epoch for mean Dec, minus 1900"""
 
-        self.cat_match: Optional[list[int]] = None
+        self.cat_match: list[int] | None = None
         """A list of ints indicating which catalogs this star has matched against.
            There are 10 entries: Yale SPM, FK6-Hipparcos-Tycho, AC2000, AGK2 Bonn,
            AKG2 Hamburg, Zone Astrog., Black Birch, Lick Astrog., NPM Lick, and
            SPM YSJ1. See the comments in this file for more details.
         """
 
-        self.apass_mag_b: Optional[float] = None
+        self.apass_mag_b: float | None = None
         """B magnitude from APASS"""
 
-        self.apass_mag_v: Optional[float] = None
+        self.apass_mag_v: float | None = None
         """V magnitude from APASS"""
 
-        self.apass_mag_g: Optional[float] = None
+        self.apass_mag_g: float | None = None
         """G magnitude from APASS"""
 
-        self.apass_mag_r: Optional[float] = None
+        self.apass_mag_r: float | None = None
         """R magnitude from APASS"""
 
-        self.apass_mag_i: Optional[float] = None
+        self.apass_mag_i: float | None = None
         """I magnitude from APASS"""
 
-        self.apass_mag_b_sigma: Optional[float] = None
+        self.apass_mag_b_sigma: float | None = None
         """Uncertainty of B magnitude from APASS"""
 
-        self.apass_mag_v_sigma: Optional[float] = None
+        self.apass_mag_v_sigma: float | None = None
         """Uncertainty of V magnitude from APASS"""
 
-        self.apass_mag_g_sigma: Optional[float] = None
+        self.apass_mag_g_sigma: float | None = None
         """Uncertainty of G magnitude from APASS"""
 
-        self.apass_mag_r_sigma: Optional[float] = None
+        self.apass_mag_r_sigma: float | None = None
         """Uncertainty of R magnitude from APASS"""
 
-        self.apass_mag_i_sigma: Optional[float] = None
+        self.apass_mag_i_sigma: float | None = None
         """Uncertainty of I magnitude from APASS"""
 
-        self.johnson_mag_b: Optional[float] = None
+        self.johnson_mag_b: float | None = None
         """The Johnson B magnitude derived from APASS measurements."""
 
-        self.johnson_mag_v: Optional[float] = None
+        self.johnson_mag_v: float | None = None
         """The Johnson V magnitude derived from APASS measurements."""
 
-        self.id_str: Optional[str] = None
+        self.id_str: str | None = None
         """A unique name indicating the position in the UCAC4 catalog"""
 
-        self.id_str_ucac2: Optional[str] = None
+        self.id_str_ucac2: str | None = None
         """A unique name indicating the position in the UCAC2 catalog"""
 
     def __str__(self) -> str:
@@ -389,7 +388,7 @@ class UCAC4StarCatalog(StarCatalog):
     """
 
     def __init__(self,
-                 dir: Optional[str | Path | FCPath] = None) -> None:
+                 dir: str | Path | FCPath | None = None) -> None:
         """Create a UCAC4StarCatalog.
 
         Parameters:
@@ -410,8 +409,8 @@ class UCAC4StarCatalog(StarCatalog):
                     ra_max: float,
                     dec_min: float,
                     dec_max: float,
-                    vmag_min: Optional[float] = None,
-                    vmag_max: Optional[float] = None,
+                    vmag_min: float | None = None,
+                    vmag_max: float | None = None,
                     full_result: bool = True,
                     **kwargs: Any) -> Iterator[UCAC4Star]:
 
@@ -434,19 +433,18 @@ class UCAC4StarCatalog(StarCatalog):
         for znum in range(start_znum, end_znum+1):
             fn = self._zone_filename(znum)
             with fn.open(mode='rb') as fp:
-                for star in self._find_stars_one_file(znum, fp,
-                                                      ra_min, ra_max,
-                                                      dec_min, dec_max,
-                                                      vmag_min=vmag_min,
-                                                      vmag_max=vmag_max,
-                                                      require_clean=require_clean,
-                                                      allow_double=allow_double,
-                                                      allow_galaxy=allow_galaxy,
-                                                      require_pm=require_pm,
-                                                      return_everything=return_everything,
-                                                      optimize_ra=optimize_ra,
-                                                      full_result=full_result):
-                    yield star
+                yield from self._find_stars_one_file(znum, fp,
+                                                     ra_min, ra_max,
+                                                     dec_min, dec_max,
+                                                     vmag_min=vmag_min,
+                                                     vmag_max=vmag_max,
+                                                     require_clean=require_clean,
+                                                     allow_double=allow_double,
+                                                     allow_galaxy=allow_galaxy,
+                                                     require_pm=require_pm,
+                                                     return_everything=return_everything,
+                                                     optimize_ra=optimize_ra,
+                                                     full_result=full_result)
 
     def _find_stars_one_file(self,
                              znum: int,
@@ -455,8 +453,8 @@ class UCAC4StarCatalog(StarCatalog):
                              ra_max: float,
                              dec_min: float,
                              dec_max: float,
-                             vmag_min: Optional[float] = None,
-                             vmag_max: Optional[float] = None,
+                             vmag_min: float | None = None,
+                             vmag_max: float | None = None,
                              require_clean: bool = True,
                              allow_double: bool = False,
                              allow_galaxy: bool = False,
@@ -548,16 +546,14 @@ class UCAC4StarCatalog(StarCatalog):
                 star.vmag_sigma = None
             else:
                 star.vmag_sigma = parsed[4] / 100.
-            if vmag_min is not None:
-                if star.vmag is None or star.vmag < vmag_min:
-                    if self.debug_level > 1:
-                        print('ID', parsed[42], 'SKIPPED MODEL MAG', star.vmag_model)
-                    continue
-            if vmag_max is not None:
-                if star.vmag is None or star.vmag > vmag_max:
-                    if self.debug_level > 1:
-                        print('ID', parsed[42], 'SKIPPED MODEL MAG', star.vmag_model)
-                    continue
+            if vmag_min is not None and (star.vmag is None or star.vmag < vmag_min):
+                if self.debug_level > 1:
+                    print('ID', parsed[42], 'SKIPPED MODEL MAG', star.vmag_model)
+                continue
+            if vmag_max is not None and (star.vmag is None or star.vmag > vmag_max):
+                if self.debug_level > 1:
+                    print('ID', parsed[42], 'SKIPPED MODEL MAG', star.vmag_model)
+                continue
 
             ###############
             # OBJECT TYPE #
@@ -1045,7 +1041,7 @@ class UCAC4StarCatalog(StarCatalog):
 #     6 =  ... same, but involving a flagged double star
 #     7 = maybe o.k. smallest sep. match in both directions, no double
 #     8 =  ... same, but involving a flagged double star
-            star.cat_match = [int(x) for x in ('%010d' % parsed[39])]
+            star.cat_match = [int(x) for x in f'{parsed[39]:010d}']
 
             ###################
             # UCAC4 UNIQUE ID #

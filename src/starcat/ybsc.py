@@ -11,18 +11,15 @@
 
 from __future__ import annotations
 
-import numpy as np
 import os
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator, Optional, cast
+from typing import Any, ClassVar, cast
 
+import numpy as np
 from filecache import FCPath
 
-from .starcatalog import (AS_TO_RAD,
-                          YEAR_TO_SEC,
-                          Star,
-                          StarCatalog
-                          )
+from .starcatalog import AS_TO_RAD, YEAR_TO_SEC, Star, StarCatalog
 
 
 class YBSCStar(Star):
@@ -35,7 +32,7 @@ class YBSCStar(Star):
     YBSC_IR_ENGLES = 1
     YBSC_IR_UNCERTAIN = 2
 
-    YBSC_IR_STRINGS = ['NASA', 'ENGLES', 'UNCERTAIN']
+    YBSC_IR_STRINGS: ClassVar[list[str]] = ['NASA', 'ENGLES', 'UNCERTAIN']
 
     YBSC_MULTIPLE_NONE = ' '
     YBSC_MULTIPLE_ASTROMETRIC = 'A'
@@ -54,29 +51,29 @@ class YBSCStar(Star):
         super().__init__()
 
         # Initialize the YBSC-specific fields
-        self.name: Optional[str] = None
+        self.name: str | None = None
         """Bayer and/or Flamsteed name"""
 
-        self.durchmusterung_id: Optional[str] = None
+        self.durchmusterung_id: str | None = None
         """Durchmusterung identification"""
 
-        self.draper_number: Optional[int] = None
+        self.draper_number: int | None = None
         """Henry Draper Catalog number (out of 225300)"""
 
-        self.sao_number: Optional[int] = None
+        self.sao_number: int | None = None
         """SAO Catalog number (out of 258997)"""
 
-        self.fk5_number: Optional[int] = None
+        self.fk5_number: int | None = None
         """FK5 star number"""
 
-        self.ir_source: Optional[bool] = None
+        self.ir_source: bool | None = None
         """True if infrared source"""
 
-        self.ir_source_ref: Optional[int] = None
+        self.ir_source_ref: int | None = None
         """Infrared source:
            NASA, ENGLES, or UNCERTAIN"""
 
-        self.multiple_star_code: Optional[str] = None
+        self.multiple_star_code: str | None = None
         """Double or multiple star code:
            'A' = Astrometric binary;
            'D' = Duplicity discovered by occultation;
@@ -85,46 +82,46 @@ class YBSCStar(Star):
            'S' = Duplicity discovered by speckle interferometry;
            'W' = Worley (1978) update of the IDS"""
 
-        self.aitken_designation: Optional[str] = None
+        self.aitken_designation: str | None = None
         """Aitken's Double Star Catalog (ADS) designation"""
 
-        self.ads_components: Optional[str] = None
+        self.ads_components: str | None = None
         """ADS number components"""
 
-        self.variable_star_id: Optional[str] = None
+        self.variable_star_id: str | None = None
         """Variable star identification"""
 
-        self.galactic_longitude: Optional[float] = None
+        self.galactic_longitude: float | None = None
         """Galactic longitude (radians)"""
 
-        self.galactic_latitude: Optional[float] = None
+        self.galactic_latitude: float | None = None
         """Galactic latitude (radians)"""
 
-        self.vmag_code: Optional[str] = None
+        self.vmag_code: str | None = None
         """Visual magnitude code:
            ' ' = V on UBV Johnson system;
            'R' = HR magnitudes reduced to the UBV system;
            'H' = original HR magnitude"""
 
-        self.vmag_uncertainty_flag: Optional[str] = None
+        self.vmag_uncertainty_flag: str | None = None
         """Uncertainty flag on visual magnitude"""
 
-        self.b_v: Optional[float] = None
+        self.b_v: float | None = None
         """B-V color in the UBV system"""
 
-        self.b_v_uncertainty_flag: Optional[str] = None
+        self.b_v_uncertainty_flag: str | None = None
         """Uncertainty flag on B-V color"""
 
-        self.u_b: Optional[float] = None
+        self.u_b: float | None = None
         """U-B color in the UBV system"""
 
-        self.u_b_uncertainty_flag: Optional[str] = None
+        self.u_b_uncertainty_flag: str | None = None
         """Uncertainty flag on U-B color"""
 
-        self.r_i: Optional[float] = None
+        self.r_i: float | None = None
         """R-I color in the system indicated by r_i_code"""
 
-        self.r_i_code: Optional[str] = None
+        self.r_i_code: str | None = None
         """Code for R-I system:
            'C' = Cousin;
            'E' = 'Eggen';
@@ -132,21 +129,21 @@ class YBSCStar(Star):
            '?' = Unknown;
            'D' = Unknown"""
 
-        self.spectral_class_code: Optional[str] = None
+        self.spectral_class_code: str | None = None
         """Spectral class code:
            'e', 'v', or 't'"""
 
-        self.parallax_type: Optional[str] = None
+        self.parallax_type: str | None = None
         """Parallax type:
            'D' = Dyanmical, otherwise Trigonometric"""
 
-        self.parallax: Optional[float] = None
+        self.parallax: float | None = None
         """Parallax (arcsec); see parallax_type for measurement type"""
 
-        self.radial_velocity: Optional[float] = None
+        self.radial_velocity: float | None = None
         """Radial velocity (km/s)"""
 
-        self.radial_velocity_comments: Optional[str] = None
+        self.radial_velocity_comments: str | None = None
         """Radial velocity comments (multiple possible):
            'V' = Variable radial velocity;
            'V?' = Suspected variable radial velocity;
@@ -154,27 +151,27 @@ class YBSCStar(Star):
            single/double/triple-lined spectra;
            'O' = Orbital data available"""
 
-        self.rotational_velocity_limit: Optional[str] = None
+        self.rotational_velocity_limit: str | None = None
         """Rotational velocity limit:
            '<', '=', or '>'"""
 
-        self.rotational_velocity: Optional[float] = None
+        self.rotational_velocity: float | None = None
         """Rotational velocity [v sin i] (km/s)"""
 
-        self.rotational_velocity_uncertainty_flag: Optional[str] = None
+        self.rotational_velocity_uncertainty_flag: str | None = None
         """Rotational velocity uncertainty and variability flag:
            ' ', ':', or 'v'"""
 
-        self.double_mag_diff: Optional[float] = None
+        self.double_mag_diff: float | None = None
         """Magnitude difference of double, or brightest multiple"""
 
-        self.double_mag_sep: Optional[float] = None
+        self.double_mag_sep: float | None = None
         """Separation of components in double_mag if occultation binary (radians)"""
 
-        self.double_mag_components: Optional[str] = None
+        self.double_mag_components: str | None = None
         """Indentification of components in double_mag"""
 
-        self.multiple_num_components: Optional[int] = None
+        self.multiple_num_components: int | None = None
         """Number of components assigned to a multiple"""
 
     def __str__(self) -> str:
@@ -362,7 +359,7 @@ class YBSCStar(Star):
 
 class YBSCStarCatalog(StarCatalog):
     def __init__(self,
-                 dir: Optional[str | Path | FCPath] = None) -> None:
+                 dir: str | Path | FCPath | None = None) -> None:
         """Create a YBSCStarCatalog.
 
         Parameters:
@@ -395,8 +392,8 @@ class YBSCStarCatalog(StarCatalog):
                     ra_max: float,
                     dec_min: float,
                     dec_max: float,
-                    vmag_min: Optional[float] = None,
-                    vmag_max: Optional[float] = None,
+                    vmag_min: float | None = None,
+                    vmag_max: float | None = None,
                     full_result: bool = True,
                     **kwargs: Any) -> Iterator[YBSCStar]:
 

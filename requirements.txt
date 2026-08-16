@@ -1,11 +1,5 @@
-coverage
-cspyce
-flake8
-mypy
-myst-parser
-numpy
-pytest
-rms-filecache
-sphinx
-sphinxcontrib-napoleon
-sphinx-rtd-theme
+# Install the package in editable mode. For development (tests, lint, type-check, docs) use:
+#   pip install -e ".[dev]"
+# For documentation build only:
+#   pip install -e ".[docs]"
+-e .

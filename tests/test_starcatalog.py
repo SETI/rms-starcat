@@ -4,23 +4,22 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterator, Optional
+from collections.abc import Iterator
+from typing import Any
 
 import numpy as np
 import pytest
 
-from starcat import (SCLASS_TO_B_MINUS_V,
-                     SCLASS_TO_SURFACE_TEMP,
-                     Star,
-                     StarCatalog)
-from starcat.starcatalog import (AS_TO_DEG,
-                                 AS_TO_RAD,
-                                 HALFPI,
-                                 MAS_TO_DEG,
-                                 MAS_TO_RAD,
-                                 TWOPI,
-                                 YEAR_TO_SEC)
-
+from starcat import SCLASS_TO_B_MINUS_V, SCLASS_TO_SURFACE_TEMP, Star, StarCatalog
+from starcat.starcatalog import (
+    AS_TO_DEG,
+    AS_TO_RAD,
+    HALFPI,
+    MAS_TO_DEG,
+    MAS_TO_RAD,
+    TWOPI,
+    YEAR_TO_SEC,
+)
 
 ################################################################################
 # Module constants
@@ -148,7 +147,7 @@ def test_star_ra_dec_with_pm() -> None:
     assert star.ra_dec_with_pm(0.) == (1., 0.5)
 
 
-@pytest.mark.parametrize('sclass,expected',
+@pytest.mark.parametrize(('sclass', 'expected'),
                          [('A0', 10800),
                           ('a0', 10800),
                           ('  M8  ', 2300),
@@ -157,12 +156,12 @@ def test_star_ra_dec_with_pm() -> None:
                           ('Q9', None),
                           ('', None),
                           (None, None)])
-def test_temperature_from_sclass(sclass: Optional[str],
-                                 expected: Optional[float]) -> None:
+def test_temperature_from_sclass(sclass: str | None,
+                                 expected: float | None) -> None:
     assert Star.temperature_from_sclass(sclass) == expected
 
 
-@pytest.mark.parametrize('sclass,expected',
+@pytest.mark.parametrize(('sclass', 'expected'),
                          [('A0', 0.),
                           ('a0', 0.),
                           ('  M8  ', 2.),
@@ -170,7 +169,7 @@ def test_temperature_from_sclass(sclass: Optional[str],
                           ('G2*', 0.63),
                           ('Q9', None)])
 def test_bmv_from_sclass(sclass: str,
-                         expected: Optional[float]) -> None:
+                         expected: float | None) -> None:
     assert Star.bmv_from_sclass(sclass) == expected
 
 
@@ -282,8 +281,8 @@ class DummyStarCatalog(StarCatalog):
                     ra_max: float,
                     dec_min: float,
                     dec_max: float,
-                    vmag_min: Optional[float] = None,
-                    vmag_max: Optional[float] = None,
+                    vmag_min: float | None = None,
+                    vmag_max: float | None = None,
                     full_result: bool = True,
                     **kwargs: Any) -> Iterator[Star]:
 
@@ -371,7 +370,7 @@ def test_find_stars_split_ra_and_dec() -> None:
                          (6., TWOPI, 0.5, HALFPI)]
 
 
-@pytest.mark.parametrize('ra_min,ra_max,dec_min,dec_max,num_calls',
+@pytest.mark.parametrize(('ra_min', 'ra_max', 'dec_min', 'dec_max', 'num_calls'),
                          [(1., 2., -0.5, 0.5, 1),
                           (6., 1., -0.5, 0.5, 2),
                           (1., 2., 0.5, -0.5, 2),

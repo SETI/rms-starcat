@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any
 
 import cspyce
 from filecache import FCPath
@@ -31,7 +32,7 @@ class SpiceStar(Star):
 class SpiceStarCatalog(StarCatalog):
     def __init__(self,
                  name: str,
-                 dir: Optional[str | Path | FCPath] = None) -> None:
+                 dir: str | Path | FCPath | None = None) -> None:
         """Create a SpiceStarCatalog.
 
         Parameters:
@@ -62,8 +63,8 @@ class SpiceStarCatalog(StarCatalog):
                     ra_max: float,
                     dec_min: float,
                     dec_max: float,
-                    vmag_min: Optional[float] = None,
-                    vmag_max: Optional[float] = None,
+                    vmag_min: float | None = None,
+                    vmag_max: float | None = None,
                     full_result: bool = True,
                     **kwargs: Any) -> Iterator[SpiceStar]:
 
