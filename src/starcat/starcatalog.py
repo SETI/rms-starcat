@@ -463,7 +463,8 @@ class StarCatalog:
         """Count the stars that match the given search criteria.
 
         This is more efficient than taking the length of the result of
-        :meth:`find_stars` because the stars are not fully populated.
+        :meth:`find_stars`, which has to build the whole list first. It also passes
+        ``full_result=False``, although how much work that saves is catalog-specific.
 
         Parameters:
             kwargs: The same search criteria accepted by :meth:`find_stars`, except for

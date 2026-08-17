@@ -72,10 +72,10 @@ limit you give and is dropped.
 Counting rather than listing
 ============================
 
-:meth:`~starcat.StarCatalog.count_stars` takes exactly the same criteria and
-returns an integer. Prefer it to ``len(list(find_stars(...)))``: it passes
-``full_result=False`` internally, so the catalogs skip the work of filling in fields
-nobody is going to read.
+:meth:`~starcat.StarCatalog.count_stars` takes exactly the same criteria and returns an
+integer. Prefer it to ``len(list(find_stars(...)))``, which builds the whole list in
+memory only to measure it. It also passes ``full_result=False`` internally, which saves
+further work in the catalogs that can skip filling in fields nobody is going to read.
 
 .. code-block:: python
 
@@ -87,10 +87,15 @@ Partial results
 
 You can ask for the same shortcut yourself with ``full_result=False``. The fields needed
 to *decide* whether a star matches are always filled in -- position, magnitude, proper
-motion, and the catalog's own quality flags -- but the rest are left as ``None``. For
-UCAC4 that means skipping the uncertainties, the image and epoch counts, the APASS
-photometry, the catalog match flags, the identification strings, and the derived
-spectral class and temperature.
+motion, and the catalog's own quality flags. What else is left out depends entirely on
+the catalog:
+
+- **UCAC4** has the most to gain and leaves the rest as ``None``: the uncertainties, the
+  image and epoch counts, the APASS photometry, the catalog match flags, the
+  identification strings, and the derived spectral class and temperature.
+- **SPICE** omits only the temperature, which is the one value it has to derive.
+- **YBSC** ignores the option. Its records are parsed in full when the catalog is
+  loaded, so there is nothing left to skip.
 
 .. code-block:: python
 

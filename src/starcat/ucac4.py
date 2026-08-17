@@ -162,10 +162,10 @@ class UCAC4Star(Star):
         """# catalogs (epochs) used for proper motions"""
 
         self.ra_mean_epoch: float | None = None
-        """Central epoch for mean RA, minus 1900"""
+        """Central epoch for mean RA (calendar year)"""
 
         self.dec_mean_epoch: float | None = None
-        """Central epoch for mean Dec, minus 1900"""
+        """Central epoch for mean Dec (calendar year)"""
 
         self.cat_match: list[int] | None = None
         """A list of ints indicating which catalogs this star has matched against.
