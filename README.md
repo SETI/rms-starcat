@@ -1,3 +1,7 @@
+# rms-starcat
+
+<!-- pyml disable MD025 -->
+
 [![GitHub release; latest by date](https://img.shields.io/github/v/release/SETI/rms-starcat)](https://github.com/SETI/rms-starcat/releases)
 [![GitHub Release Date](https://img.shields.io/github/release-date/SETI/rms-starcat)](https://github.com/SETI/rms-starcat/releases)
 [![Test Status](https://img.shields.io/github/actions/workflow/status/SETI/rms-starcat/run-tests.yml?branch=main)](https://github.com/SETI/rms-starcat/actions)
@@ -21,6 +25,8 @@
 ![GitHub License](https://img.shields.io/github/license/SETI/rms-starcat)
 [![Number of GitHub stars](https://img.shields.io/github/stars/SETI/rms-starcat)](https://github.com/SETI/rms-starcat/stargazers)
 ![GitHub forks](https://img.shields.io/github/forks/SETI/rms-starcat)
+[![DOI](https://zenodo.org/badge/rms-starcat.svg)](https://zenodo.org/badge/latestdoi/rms-starcat)
+<!-- start-after-point -->
 
 # Introduction
 
@@ -91,7 +97,7 @@ print(vega_list[0])
 
 yields:
 
-```
+```text
 UNIQUE ID 7001 | RA 279.2345833° (18h36m56.300s) | DEC 38.7836111° (+038d47m1.000s)
 VMAG  0.030  | PM RA 259.135 mas/yr  | PM DEC 286.000 mas/yr
 TEMP 10800 | SCLASS A0Va

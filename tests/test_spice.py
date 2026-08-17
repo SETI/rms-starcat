@@ -5,17 +5,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import cspyce
-from filecache import FCPath
 import numpy as np
 import pytest
+from catalog_data import SpiceTestStar, write_spice_catalog
+from filecache import FCPath
 
 from starcat import SpiceStar, SpiceStarCatalog, Star
-
-from catalog_data import SpiceTestStar, write_spice_catalog
-
 
 # RA and DEC are in degrees
 TEST_STARS = [SpiceTestStar(10., -10., 1., 'G2', 101),
@@ -39,7 +37,7 @@ def cat(catalog_dir: Path) -> SpiceStarCatalog:
     return SpiceStarCatalog('testcat', dir=catalog_dir)
 
 
-def numbers(stars: list[Star]) -> list[Optional[int]]:
+def numbers(stars: list[Star]) -> list[int | None]:
     return [star.unique_number for star in stars]
 
 
@@ -81,14 +79,14 @@ def test_parse_star(cat: SpiceStarCatalog) -> None:
 
 
 def test_spectral_class_with_asterisk(cat: SpiceStarCatalog) -> None:
-    star = [s for s in cat.find_stars() if s.unique_number == 102][0]
+    star = next(s for s in cat.find_stars() if s.unique_number == 102)
 
     assert star.spectral_class == 'A0*'
     assert star.temperature == 10800
 
 
 def test_unknown_spectral_class(cat: SpiceStarCatalog) -> None:
-    star = [s for s in cat.find_stars() if s.unique_number == 104][0]
+    star = next(s for s in cat.find_stars() if s.unique_number == 104)
 
     assert star.spectral_class == 'QQ'
     assert star.temperature is None

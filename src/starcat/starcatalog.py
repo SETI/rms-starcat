@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 import inspect
-import numpy as np
-from typing import Any, Optional, no_type_check
+from collections.abc import Iterator
+from typing import Any, no_type_check
 
+import numpy as np
 
 AS_TO_DEG = 1 / 3600.
 AS_TO_RAD = np.radians(AS_TO_DEG)
@@ -192,52 +192,52 @@ class Star:
     def __init__(self) -> None:
         """Constructor for Star; additional attributes are available from subclasses."""
 
-        self.unique_number: Optional[int] = None
+        self.unique_number: int | None = None
         """Unique catalog number (may not be unique across catalogs)"""
 
-        self.ra: Optional[float] = None
+        self.ra: float | None = None
         """Right ascension at J2000 epoch (radians)"""
 
-        self.ra_sigma: Optional[float] = None
+        self.ra_sigma: float | None = None
         """Right ascension uncertainty (radians)"""
 
-        self.rac_sigma: Optional[float] = None
+        self.rac_sigma: float | None = None
         """Right ascension * cos(DEC) uncertainty (radians)"""
 
-        self.dec: Optional[float] = None
+        self.dec: float | None = None
         """Declination at J2000 epoch (radians)"""
 
-        self.dec_sigma: Optional[float] = None
+        self.dec_sigma: float | None = None
         """Declination uncertainty (radians)"""
 
-        self.vmag: Optional[float] = None
+        self.vmag: float | None = None
         """Visual magnitude"""
 
-        self.vmag_sigma: Optional[float] = None
+        self.vmag_sigma: float | None = None
         """Visual magnitude uncertainty"""
 
-        self.pm_ra: Optional[float] = None
+        self.pm_ra: float | None = None
         """Proper motion in RA (radians/sec)"""
 
-        self.pm_ra_sigma: Optional[float] = None
+        self.pm_ra_sigma: float | None = None
         """Proper motion in RA uncertainty (radians/sec)"""
 
-        self.pm_rac: Optional[float] = None
+        self.pm_rac: float | None = None
         """Proper motion in RA * cos(DEC) (radians/sec)"""
 
-        self.pm_rac_sigma: Optional[float] = None
+        self.pm_rac_sigma: float | None = None
         """Proper motion in RA * cos(DEC) uncertainty (radians/sec)"""
 
-        self.pm_dec: Optional[float] = None
+        self.pm_dec: float | None = None
         """Proper motion in DEC (radians/sec)"""
 
-        self.pm_dec_sigma: Optional[float] = None
+        self.pm_dec_sigma: float | None = None
         """Proper motion in DEC error (radians/sec)"""
 
-        self.spectral_class: Optional[str] = None
+        self.spectral_class: str | None = None
         """Spectral class"""
 
-        self.temperature: Optional[float] = None
+        self.temperature: float | None = None
         """Star temperature (usually derived from spectral class)"""
 
     def __str__(self) -> str:
@@ -346,7 +346,7 @@ class Star:
         return (self.ra + tdb*self.pm_ra, self.dec + tdb*self.pm_dec)
 
     @staticmethod
-    def temperature_from_sclass(sclass: Optional[str]) -> float | None:
+    def temperature_from_sclass(sclass: str | None) -> float | None:
         """Return a star's temperature (K) given its spectral class.
 
         Parameters:
@@ -436,8 +436,8 @@ class StarCatalog:
                    ra_max: float = TWOPI,
                    dec_min: float = -HALFPI,
                    dec_max: float = HALFPI,
-                   vmag_min: Optional[float] = None,
-                   vmag_max: Optional[float] = None,
+                   vmag_min: float | None = None,
+                   vmag_max: float | None = None,
                    full_result: bool = True,
                    **kwargs: Any) -> Iterator[Star]:
         """Yield the stars that match the given search criteria.
@@ -523,8 +523,8 @@ class StarCatalog:
                     ra_max: float,
                     dec_min: float,
                     dec_max: float,
-                    vmag_min: Optional[float] = None,
-                    vmag_max: Optional[float] = None,
+                    vmag_min: float | None = None,
+                    vmag_max: float | None = None,
                     full_result: bool = True,
                     **kwargs: Any) -> Iterator[Star]:
         raise NotImplementedError

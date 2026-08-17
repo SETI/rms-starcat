@@ -14,12 +14,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import struct
-from typing import Iterable, Optional, Sequence
+from collections.abc import Iterable, Sequence
+from pathlib import Path
 
 import cspyce
-
 
 ################################################################################
 # UCAC4
@@ -137,13 +136,13 @@ UCAC4_DEFAULTS: dict[str, int] = {
 def ucac4_ra(ra_deg: float) -> int:
     """Convert an RA in degrees to the UCAC4 integer field value (mas)."""
 
-    return int(round(ra_deg * 3600000.))
+    return round(ra_deg * 3600000.)
 
 
 def ucac4_spd(dec_deg: float) -> int:
     """Convert a DEC in degrees to the UCAC4 south pole distance field (mas)."""
 
-    return int(round((dec_deg+90.) * 3600000.))
+    return round((dec_deg+90.) * 3600000.)
 
 
 def ucac4_record(**fields: int) -> bytes:
@@ -348,7 +347,7 @@ class SpiceTestStar:
 def write_spice_catalog(root: Path,
                         name: str,
                         stars: Sequence[SpiceTestStar],
-                        table_name: Optional[str] = None) -> Path:
+                        table_name: str | None = None) -> Path:
     """Write a SPICE type 1 star catalog containing the given stars.
 
     Parameters:

@@ -4,21 +4,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any
 
-from filecache import FCPath
 import numpy as np
 import pytest
+from catalog_data import write_ybsc_catalog, ybsc_dec, ybsc_ra, ybsc_record
+from filecache import FCPath
 
 from starcat import Star, YBSCStar, YBSCStarCatalog
 from starcat.starcatalog import AS_TO_RAD, YEAR_TO_SEC
-
-from catalog_data import (write_ybsc_catalog,
-                          ybsc_dec,
-                          ybsc_ra,
-                          ybsc_record)
-
 
 # A Vega-like star with every optional field filled in
 VEGA = ybsc_record(hr='7001', name='3Alp Lyr', dm='BD+38 3238', hd='172167',
@@ -241,14 +237,14 @@ def test_records_without_vmag_are_skipped(tmp_path: Path) -> None:
     assert cat._stars[0].unique_number == 7001
 
 
-@pytest.mark.parametrize('flag,expected',
+@pytest.mark.parametrize(('flag', 'expected'),
                          [(' ', YBSCStar.YBSC_IR_NASA),
                           ("'", YBSCStar.YBSC_IR_ENGLES),
                           (':', YBSCStar.YBSC_IR_UNCERTAIN),
                           ('X', None)])
 def test_ir_source_reference(tmp_path: Path,
                              flag: str,
-                             expected: Optional[int]) -> None:
+                             expected: int | None) -> None:
     cat = make_catalog(tmp_path, [ybsc_record(hr='1', ir_flag='I', ir_ref=flag,
                                               **ybsc_ra(1, 0, 0.),
                                               **ybsc_dec('+', 10, 0, 0),
@@ -262,14 +258,14 @@ def test_ir_source_reference(tmp_path: Path,
     assert star.ir_source_ref == expected
 
 
-@pytest.mark.parametrize('sptype,temperature',
+@pytest.mark.parametrize(('sptype', 'temperature'),
                          [('A0Va', 10800),
                           ('gG9', 5365),      # A giant; the g is stripped
                           ('K0IIIbCN-0.5', 5240),
                           ('QQQ', None)])
 def test_temperature_from_spectral_type(tmp_path: Path,
                                         sptype: str,
-                                        temperature: Optional[int]) -> None:
+                                        temperature: int | None) -> None:
     cat = make_catalog(tmp_path, [ybsc_record(hr='1', **ybsc_ra(1, 0, 0.),
                                               **ybsc_dec('+', 10, 0, 0),
                                               glon='0.00', glat='0.00',
@@ -282,7 +278,7 @@ def test_temperature_from_spectral_type(tmp_path: Path,
     assert star.temperature == temperature
 
 
-@pytest.mark.parametrize('sign,degrees,minutes,seconds,expected',
+@pytest.mark.parametrize(('sign', 'degrees', 'minutes', 'seconds', 'expected'),
                          [('+', 38, 47, 1, 38 + 47/60. + 1/3600.),
                           ('-', 38, 47, 1, -(38 + 47/60. + 1/3600.)),
                           ('+', 0, 30, 11, 30/60. + 11/3600.),

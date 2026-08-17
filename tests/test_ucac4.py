@@ -4,19 +4,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
-from filecache import FCPath
 import numpy as np
 import pytest
+from catalog_data import ucac4_ra, ucac4_record, ucac4_spd, write_ucac4_zone
+from filecache import FCPath
 
 from starcat import Star, UCAC4Star, UCAC4StarCatalog
 from starcat.starcatalog import HALFPI, MAS_TO_RAD, TWOPI, YEAR_TO_SEC
 from starcat.ucac4 import UCAC4_RECORD_SIZE
-
-from catalog_data import ucac4_ra, ucac4_record, ucac4_spd, write_ucac4_zone
-
 
 # Zone 451 covers declinations 0.0 to 0.2 degrees
 ZNUM = 451
@@ -304,7 +303,7 @@ def test_pm_too_large(tmp_path: Path) -> None:
         assert star.pm_dec is None
 
 
-@pytest.mark.parametrize('code,expected',
+@pytest.mark.parametrize(('code', 'expected'),
                          [(251, 27.5), (252, 32.5), (253, 37.5), (254, 45.)])
 def test_pm_ra_sigma_codes(tmp_path: Path,
                            code: int,
@@ -318,7 +317,7 @@ def test_pm_ra_sigma_codes(tmp_path: Path,
                                              COS_DEC)
 
 
-@pytest.mark.parametrize('code,expected',
+@pytest.mark.parametrize(('code', 'expected'),
                          [(251, 27.5), (252, 32.5), (253, 37.5), (254, 45.)])
 def test_pm_dec_sigma_codes(tmp_path: Path,
                             code: int,
@@ -379,7 +378,7 @@ def test_vmag_limits(tmp_path: Path) -> None:
     assert [s.vmag for s in find(cat, vmag_min=8., vmag_max=12.)] == [10.]
 
 
-@pytest.mark.parametrize('obj_type,is_clean',
+@pytest.mark.parametrize(('obj_type', 'is_clean'),
                          [(0, True), (1, True), (2, False), (3, True),
                           (4, True), (5, True), (6, True), (7, True),
                           (8, False), (9, False)])
@@ -571,7 +570,7 @@ def ra_search_records() -> list[bytes]:
             record(ra_deg=30.), record(ra_deg=40.)]
 
 
-@pytest.mark.parametrize('ra_min_deg,expected',
+@pytest.mark.parametrize(('ra_min_deg', 'expected'),
                          [(0., [1, 2, 3, 4, 5]),
                           (5., [1, 2, 3, 4, 5]),
                           (10., [1, 2, 3, 4, 5]),
