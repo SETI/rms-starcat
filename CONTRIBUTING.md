@@ -106,6 +106,11 @@ We welcome all code contributions, including bug fixes, new features, and improv
 
 - All suggested changes must be submitted using GitHub's "Pull Request" functionality.
 - All code changes must include appropriate new or updated tests to verify the changes made.
+- The test suite must remain self-contained. It runs with `coverage run -m pytest` and
+  requires no network access and no copy of the real star catalogs; the helpers in
+  `tests/catalog_data.py` write small synthetic UCAC4, YBSC, and SPICE catalogs, in the
+  real on-disk formats, into a temporary directory. Add records there rather than adding
+  test data files or reaching out to externally hosted catalogs.
 - Existing documentation, including function- and file-level docstrings, must be updated as necessary, and new features fully described.
 - Code style must conform to that of the existing code; for Python this is generally a variant of PEP8 and PEP257.
 

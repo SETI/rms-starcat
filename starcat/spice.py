@@ -44,11 +44,11 @@ class SpiceStarCatalog(StarCatalog):
 
         super().__init__()
         if dir is None:
-            try:
+            if 'SPICE_PATH' in os.environ:
                 dir = FCPath(os.environ['SPICE_PATH']) / 'Stars'
-            except KeyError:
+            elif 'OOPS_RESOURCES' in os.environ:
                 dir = FCPath(os.environ['OOPS_RESOURCES']) / 'SPICE' / 'Stars'
-            except KeyError:
+            else:
                 raise RuntimeError(
                     'SPICE_PATH and OOPS_RESOURCES environment variables not set')
         else:

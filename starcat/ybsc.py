@@ -506,14 +506,13 @@ class YBSCStarCatalog(StarCatalog):
         ra_hr = float(record[75:77])
         ra_min = float(record[77:79])
         ra_sec = float(record[79:83])
-        dec_deg = float(record[83:86])
+        dec_deg = float(record[84:86])
         dec_min = float(record[86:88])
         dec_sec = float(record[88:90])
 
-        sign = 1
-        if dec_deg < 0:
-            dec_deg = -dec_deg
-            sign = -1
+        # The sign has to be taken from the sign character because the degrees
+        # field is zero for stars within one degree of the celestial equator
+        sign = -1 if record[83] == '-' else 1
 
         star.ra = np.radians((ra_hr/24. + ra_min/24./60 + ra_sec/24./60/60)*360)
         star.dec = np.radians(sign*(dec_deg + dec_min/60. + dec_sec/3600.))

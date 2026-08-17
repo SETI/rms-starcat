@@ -242,7 +242,7 @@ class Star:
 
     def __str__(self) -> str:
 
-        ret = f'UNIQUE ID {self.unique_number:d}'
+        ret = f'UNIQUE ID {self.unique_number}'
 
         if self.ra is not None:
             ret += f' | RA {np.degrees(self.ra):.7f}°'
@@ -299,8 +299,8 @@ class Star:
         if self.temperature is None:
             ret += 'TEMP N/A'
         else:
-            ret += f'TEMP {self.temperature:5d}'
-        ret += f' | SCLASS {self.spectral_class:s}'
+            ret += f'TEMP {self.temperature:5.0f}'
+        ret += f' | SCLASS {self.spectral_class}'
 
         return ret
 
