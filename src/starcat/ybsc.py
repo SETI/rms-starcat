@@ -2,12 +2,19 @@
 # starcat/ybsc.py
 ################################################################################
 
-# The Bright Star Catalogue,  5th Revised Ed. (Preliminary Version)
-#      Hoffleit D., Warren Jr W.H.
-#     <Astronomical Data Center, NSSDC/ADC (1991)>
-#     =1964BS....C......0H
-# From ftp://cdsarc.u-strasbg.fr/cats/V/50/1
-# http://tdc-www.harvard.edu/catalogs/bsc5.html
+"""Support for the Yale Bright Star Catalog.
+
+The YBSC contains essentially every star visible to the naked eye, roughly 9100 of them
+down to magnitude 6.5, with a rich set of photometric, spectroscopic, and multiplicity
+information. The whole catalog is a single small text file, so it is read into memory
+when the catalog object is created.
+
+Reference:
+    The Bright Star Catalogue, 5th Revised Ed. (Preliminary Version),
+    Hoffleit D., Warren Jr W.H., Astronomical Data Center, NSSDC/ADC (1991),
+    =1964BS....C......0H. From ftp://cdsarc.u-strasbg.fr/cats/V/50/1 and
+    http://tdc-www.harvard.edu/catalogs/bsc5.html
+"""
 
 from __future__ import annotations
 
@@ -47,6 +54,11 @@ class YBSCStar(Star):
     YBSC_VMAG_UNCERTAINTY_HR = 'H'
 
     def __init__(self) -> None:
+        """Constructor for YBSCStar.
+
+        See :class:`~starcat.Star` for the attributes common to all catalogs.
+        """
+
         # Initialize the standard fields
         super().__init__()
 
@@ -175,6 +187,15 @@ class YBSCStar(Star):
         """Number of components assigned to a multiple"""
 
     def __str__(self) -> str:
+        """Return a multi-line, human-readable summary of the star.
+
+        The summary of :class:`~starcat.Star` is followed by the YBSC-specific
+        attributes, most of which are shown as ``None`` or ``N/A`` when they are not
+        filled in. A star with no ``parallax_type`` is reported as having a trigonometric
+        parallax, and a star built by hand rather than read from the catalog must have
+        ``ir_source`` set, because it is formatted as an integer.
+        """
+
         ret = Star.__str__(self) + '\n'
 
         ret += f'Name "{self.name}"'
@@ -358,13 +379,29 @@ class YBSCStar(Star):
 # --------------------------------------------------------------------------------
 
 class YBSCStarCatalog(StarCatalog):
+    """A Yale Bright Star Catalog.
+
+    The entire catalog is read when this object is created, and every search is a scan
+    over the roughly 9100 stars held in memory. Records with no visual magnitude, which
+    are the entries that have been removed from the catalog, are discarded while reading.
+
+    This class adds the following option to `find_stars` and `count_stars`::
+
+        allow_double (bool, default False): If True, include stars carrying a double or
+            multiple star code. Note that the default excludes about 1600 stars.
+    """
+
     def __init__(self,
                  dir: str | Path | FCPath | None = None) -> None:
         """Create a YBSCStarCatalog.
 
         Parameters:
-            dir: The path to the star catalog directory (may be a URL). Within
-                 this directory should be the file ``catalog``.
+            dir: The path to the star catalog directory (may be a URL). Within this
+                directory should be the file ``catalog``. If None, the directory named by
+                the ``YBSC_PATH`` environment variable is used.
+
+        Raises:
+            KeyError: If ``dir`` is None and ``YBSC_PATH`` is not set.
         """
 
         super().__init__()
@@ -409,9 +446,9 @@ class YBSCStarCatalog(StarCatalog):
             if not dec_min <= star.dec <= dec_max:
                 continue
             if star.vmag is not None:
-                if vmag_min and star.vmag < vmag_min:
+                if vmag_min is not None and star.vmag < vmag_min:
                     continue
-                if vmag_max and star.vmag > vmag_max:
+                if vmag_max is not None and star.vmag > vmag_max:
                     continue
             if not allow_double and star.multiple_star_code != ' ':
                 continue

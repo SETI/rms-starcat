@@ -2,6 +2,12 @@
 # starcat/spice.py
 ################################################################################
 
+"""Support for NAIF SPICE type 1 star catalogs.
+
+A SPICE star catalog is a single ``.bdb`` kernel read through the CSPICE ``STC01``
+routines; catalogs distributed by NAIF include ``hipparcos``, ``ppm``, and ``tycho2``.
+"""
+
 from __future__ import annotations
 
 import os
@@ -25,11 +31,23 @@ class SpiceStar(Star):
     """
 
     def __init__(self) -> None:
+        """Constructor for SpiceStar."""
+
         # Initialize the standard fields
         super().__init__()
 
 
 class SpiceStarCatalog(StarCatalog):
+    """A NAIF SPICE type 1 star catalog.
+
+    The catalog is a single ``.bdb`` kernel, which is loaded when this object is created
+    and stays loaded for the life of the process. `find_stars` and `count_stars` accept no
+    options beyond the ones common to all catalogs, and the resulting :class:`SpiceStar`
+    objects carry a catalog number, a position and its uncertainty, a magnitude, a spectral
+    class, and a temperature derived from that class. SPICE catalogs record no proper
+    motion.
+    """
+
     def __init__(self,
                  name: str,
                  dir: str | Path | FCPath | None = None) -> None:
@@ -38,9 +56,13 @@ class SpiceStarCatalog(StarCatalog):
         Parameters:
             name: The name of the SPICE catalog without the extension, such as
                 ``hipparcos``, ``ppm``, or ``tycho2``.
-            dir: The path to the star catalog directory (may be a URL). Within
-                this directory should be the kernels for the requested name
-                (``name.dbd`` and ``name.xdb``).
+            dir: The path to the star catalog directory (may be a URL). Within this
+                directory should be the kernel for the requested name (``name.bdb``). If
+                None, the ``Stars`` subdirectory of ``SPICE_PATH`` is used, or failing
+                that the ``SPICE/Stars`` subdirectory of ``OOPS_RESOURCES``.
+
+        Raises:
+            RuntimeError: If ``dir`` is None and neither environment variable is set.
         """
 
         super().__init__()
