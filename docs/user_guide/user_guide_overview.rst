@@ -31,7 +31,7 @@ which catalog produced them. Catalog-specific fields remain available on the sub
 Installation
 ============
 
-The package requires Python 3.10 or later:
+The package requires Python 3.11 or later:
 
 .. code-block:: sh
 
